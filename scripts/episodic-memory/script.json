@@ -1,0 +1,9 @@
+{
+	"id": "episodic-memory",
+	"name": "Episodic Memory",
+	"desc": "情景记忆库（caselog 会话沉淀）Web 控制台（node 服务，127.0.0.1:8791）",
+	"start": "\"C:\\Program Files\\nodejs\\node.exe\" \"D:\\cly\\agent-tools\\episodic-memory\\episodic-memory\\node_modules\\tsx\\dist\\cli.mjs\" \"D:\\cly\\agent-tools\\episodic-memory\\episodic-memory\\server\\src\\index.ts\"",
+	"open": "explorer http://localhost:8791",
+	"check": "http://localhost:8791/api/health",
+	"order": 5
+}

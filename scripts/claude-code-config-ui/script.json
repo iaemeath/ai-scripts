@@ -1,0 +1,9 @@
+{
+	"id": "claude-code-config-ui",
+	"name": "AI 配置管理台",
+	"desc": "AI 编码代理配置管理（skills/plugins/MCP/规则，Config-as-SSOT；127.0.0.1:8787）",
+	"start": "\"C:\\Program Files\\nodejs\\node.exe\" \"D:\\cly\\claude-code-config-ui\\node_modules\\tsx\\dist\\cli.mjs\" \"D:\\cly\\claude-code-config-ui\\server\\src\\index.ts\"",
+	"open": "explorer http://localhost:8787",
+	"check": "http://localhost:8787/api/health",
+	"order": 6
+}
