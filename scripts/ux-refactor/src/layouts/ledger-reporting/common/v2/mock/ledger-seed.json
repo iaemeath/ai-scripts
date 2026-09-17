@@ -1,0 +1,1651 @@
+{
+  "_comment": "模块1.1 台账上报链 种子数据(单一数据源):后端 ResourceSeedDataInitializer 启动装载 + 前端 cz-resource-web mock 共用。引用键约定:templateName/ledgerEmsId/batchSeq,主键由装载方生成并登记映射。",
+  "templates": [
+    {
+      "name": "机组台账模板",
+      "fieldDefinition": [
+        {
+          "name": "deviceName",
+          "desc": "台账名称",
+          "type": "STRING",
+          "required": true
+        },
+        {
+          "name": "stationName",
+          "desc": "厂站",
+          "type": "STRING",
+          "required": false
+        },
+        {
+          "name": "ratedCapacity",
+          "desc": "额定容量(MW)",
+          "type": "NUMBER",
+          "required": true
+        },
+        {
+          "name": "kvnom",
+          "desc": "电压等级(kV)",
+          "type": "NUMBER",
+          "required": false
+        },
+        {
+          "name": "pmax",
+          "desc": "出力上限(MW)",
+          "type": "NUMBER",
+          "required": false
+        },
+        {
+          "name": "pmin",
+          "desc": "出力下限(MW)",
+          "type": "NUMBER",
+          "required": false
+        },
+        {
+          "name": "runState",
+          "desc": "运行状态",
+          "type": "STRING",
+          "required": false
+        },
+        {
+          "name": "heatRate",
+          "desc": "热耗率(kJ/kWh)",
+          "type": "NUMBER",
+          "required": false
+        },
+        {
+          "name": "steamPressure",
+          "desc": "主蒸汽压力(MPa)",
+          "type": "NUMBER",
+          "required": false
+        }
+      ],
+      "enabled": "Y"
+    },
+    {
+      "name": "光伏电站台账模板",
+      "fieldDefinition": [
+        {
+          "name": "deviceName",
+          "desc": "台账名称",
+          "type": "STRING",
+          "required": true
+        },
+        {
+          "name": "stationName",
+          "desc": "厂站",
+          "type": "STRING",
+          "required": false
+        },
+        {
+          "name": "ratedCapacity",
+          "desc": "额定容量(MW)",
+          "type": "NUMBER",
+          "required": true
+        },
+        {
+          "name": "kvnom",
+          "desc": "电压等级(kV)",
+          "type": "NUMBER",
+          "required": false
+        },
+        {
+          "name": "commissionDate",
+          "desc": "投运日期",
+          "type": "DATE",
+          "required": false
+        },
+        {
+          "name": "moduleType",
+          "desc": "组件类型",
+          "type": "STRING",
+          "required": false
+        },
+        {
+          "name": "panelCount",
+          "desc": "组件数量(块)",
+          "type": "NUMBER",
+          "required": false
+        }
+      ],
+      "enabled": "Y"
+    },
+    {
+      "name": "储能电站台账模板",
+      "fieldDefinition": [
+        {
+          "name": "deviceName",
+          "desc": "台账名称",
+          "type": "STRING",
+          "required": true
+        },
+        {
+          "name": "stationName",
+          "desc": "厂站",
+          "type": "STRING",
+          "required": false
+        },
+        {
+          "name": "ratedCapacity",
+          "desc": "额定容量(MW)",
+          "type": "NUMBER",
+          "required": true
+        },
+        {
+          "name": "kvnom",
+          "desc": "电压等级(kV)",
+          "type": "NUMBER",
+          "required": false
+        },
+        {
+          "name": "pmax",
+          "desc": "充电上限(MW)",
+          "type": "NUMBER",
+          "required": false
+        },
+        {
+          "name": "pmin",
+          "desc": "放电下限(MW)",
+          "type": "NUMBER",
+          "required": false
+        },
+        {
+          "name": "chargeRate",
+          "desc": "充放电倍率",
+          "type": "NUMBER",
+          "required": false
+        },
+        {
+          "name": "cellType",
+          "desc": "电芯类型",
+          "type": "STRING",
+          "required": false
+        }
+      ],
+      "enabled": "Y"
+    },
+    {
+      "name": "馈线台账模板",
+      "fieldDefinition": [
+        {
+          "name": "deviceName",
+          "desc": "台账名称",
+          "type": "STRING",
+          "required": true
+        },
+        {
+          "name": "stationName",
+          "desc": "厂站",
+          "type": "STRING",
+          "required": false
+        },
+        {
+          "name": "kvnom",
+          "desc": "电压等级(kV)",
+          "type": "NUMBER",
+          "required": false
+        },
+        {
+          "name": "lineName",
+          "desc": "馈线名称",
+          "type": "STRING",
+          "required": false
+        },
+        {
+          "name": "lineLength",
+          "desc": "线路长度(km)",
+          "type": "NUMBER",
+          "required": false
+        },
+        {
+          "name": "conductorSection",
+          "desc": "导线截面(mm²)",
+          "type": "NUMBER",
+          "required": false
+        }
+      ],
+      "enabled": "Y"
+    }
+  ],
+  "ledgers": [
+    {
+      "templateName": "机组台账模板",
+      "emsId": "SEED-LG01",
+      "code": "LEDG01",
+      "deviceName": "龙湖电厂#1机组",
+      "stationName": "龙湖电厂",
+      "deviceType": "THERMAL",
+      "ratedCapacity": 1000,
+      "kvnom": 220,
+      "pmax": 1000,
+      "pmin": 500,
+      "areaName": "新北区",
+      "dispatchRelation": "地调调度",
+      "deviceStatus": "1",
+      "runState": "并网运行",
+      "manufacturer": "东方电气",
+      "modelNo": "QFSN-330-2",
+      "commissionDate": "2012-05-20",
+      "archiveStatus": "ARCHIVED",
+      "dataBaseline": "LOCAL",
+      "sync": "Y",
+      "remark": "",
+      "extra": {
+        "heatRate": 7500,
+        "steamPressure": 16.7
+      }
+    },
+    {
+      "templateName": "机组台账模板",
+      "emsId": "SEED-LG02",
+      "code": "LEDG02",
+      "deviceName": "龙湖电厂#2机组",
+      "stationName": "龙湖电厂",
+      "deviceType": "THERMAL",
+      "ratedCapacity": 660,
+      "kvnom": 220,
+      "pmax": 660,
+      "pmin": 330,
+      "areaName": "新北区",
+      "dispatchRelation": "地调调度",
+      "deviceStatus": "1",
+      "runState": "并网运行",
+      "manufacturer": "哈尔滨电气",
+      "modelNo": "QFSN-660-2",
+      "commissionDate": "2015-09-10",
+      "archiveStatus": "ARCHIVED",
+      "dataBaseline": "LOCAL",
+      "sync": "Y",
+      "remark": "",
+      "extra": {
+        "heatRate": 7650,
+        "steamPressure": 16.7
+      }
+    },
+    {
+      "templateName": "机组台账模板",
+      "emsId": "SEED-LG03",
+      "code": "LEDG03",
+      "deviceName": "横山燃机#1",
+      "stationName": "横山燃机电厂",
+      "deviceType": "GAS",
+      "ratedCapacity": 480,
+      "kvnom": 220,
+      "pmax": 480,
+      "pmin": 240,
+      "areaName": "武进区",
+      "dispatchRelation": "地调调度",
+      "deviceStatus": "1",
+      "runState": "并网运行",
+      "manufacturer": "上海电气",
+      "modelNo": "GT-480",
+      "commissionDate": "2018-03-15",
+      "archiveStatus": "ARCHIVED",
+      "dataBaseline": "LOCAL",
+      "sync": "Y",
+      "remark": "",
+      "extra": {
+        "heatRate": 9800
+      }
+    },
+    {
+      "templateName": "机组台账模板",
+      "emsId": "SEED-LG04",
+      "code": "LEDG04",
+      "deviceName": "横山燃机#2",
+      "stationName": "横山燃机站",
+      "deviceType": "GAS",
+      "ratedCapacity": 400,
+      "kvnom": 220,
+      "pmax": 400,
+      "pmin": 200,
+      "areaName": "武进区",
+      "dispatchRelation": "地调调度",
+      "deviceStatus": "1",
+      "runState": "并网运行",
+      "manufacturer": "东方电气",
+      "modelNo": "GT-400",
+      "commissionDate": "2019-11-08",
+      "archiveStatus": "ARCHIVED",
+      "dataBaseline": "LOCAL",
+      "sync": "Y",
+      "remark": ""
+    },
+    {
+      "templateName": "机组台账模板",
+      "emsId": "SEED-LG05",
+      "code": "LEDG05",
+      "deviceName": "南山抽蓄#1机组",
+      "stationName": "南山抽水蓄能电站",
+      "deviceType": "PUMPED_STORAGE",
+      "ratedCapacity": 250,
+      "kvnom": 500,
+      "pmax": 250,
+      "pmin": -250,
+      "areaName": "溧阳市",
+      "dispatchRelation": "地调调度",
+      "deviceStatus": "1",
+      "runState": "并网运行",
+      "manufacturer": "哈电",
+      "modelNo": "PS-250",
+      "commissionDate": "2017-09-01",
+      "archiveStatus": "ARCHIVED",
+      "dataBaseline": "LOCAL",
+      "sync": "Y",
+      "remark": ""
+    },
+    {
+      "templateName": "机组台账模板",
+      "emsId": "SEED-LG06",
+      "code": "LEDG06",
+      "deviceName": "南山抽蓄#2机组",
+      "stationName": "南山抽水蓄能电站",
+      "deviceType": "PUMPED_STORAGE",
+      "ratedCapacity": 250,
+      "kvnom": 500,
+      "pmax": 250,
+      "pmin": -250,
+      "areaName": "溧阳市",
+      "dispatchRelation": "地调调度",
+      "deviceStatus": "1",
+      "runState": "并网运行",
+      "manufacturer": "哈电",
+      "modelNo": "PS-250",
+      "commissionDate": "2017-09-01",
+      "archiveStatus": "ARCHIVED",
+      "dataBaseline": "PROVINCIAL",
+      "sync": "Y",
+      "remark": ""
+    },
+    {
+      "templateName": "机组台账模板",
+      "emsId": "SEED-LG07",
+      "code": "LEDG07",
+      "deviceName": "南山抽蓄#3机组",
+      "stationName": "南山抽水蓄能电站",
+      "deviceType": "PUMPED_STORAGE",
+      "ratedCapacity": 250,
+      "kvnom": 500,
+      "pmax": 250,
+      "pmin": -250,
+      "areaName": "溧阳市",
+      "dispatchRelation": "地调调度",
+      "deviceStatus": "1",
+      "runState": "并网运行",
+      "manufacturer": "哈电",
+      "modelNo": "PS-250",
+      "commissionDate": "2017-09-01",
+      "archiveStatus": "ARCHIVED",
+      "dataBaseline": "LOCAL",
+      "sync": "Y",
+      "remark": ""
+    },
+    {
+      "templateName": "光伏电站台账模板",
+      "emsId": "SEED-LG08",
+      "code": "LEDG08",
+      "deviceName": "翠湖光伏电站",
+      "stationName": "翠湖光伏升压站",
+      "deviceType": "SOLAR",
+      "ratedCapacity": 100,
+      "kvnom": 110,
+      "pmax": 100,
+      "pmin": 0,
+      "areaName": "溧阳市",
+      "dispatchRelation": "地调调度",
+      "deviceStatus": "1",
+      "runState": "并网运行",
+      "manufacturer": "华为",
+      "modelNo": "SUN2000-100",
+      "commissionDate": "2020-12-25",
+      "archiveStatus": "ARCHIVED",
+      "dataBaseline": "LOCAL",
+      "sync": "Y",
+      "remark": ""
+    },
+    {
+      "templateName": "光伏电站台账模板",
+      "emsId": "SEED-LG09",
+      "code": "LEDG09",
+      "deviceName": "云湖光伏电站",
+      "stationName": "云湖光伏升压站",
+      "deviceType": "SOLAR",
+      "ratedCapacity": 80,
+      "kvnom": 110,
+      "pmax": 80,
+      "pmin": 0,
+      "areaName": "溧阳市",
+      "dispatchRelation": "地调调度",
+      "deviceStatus": "1",
+      "runState": "并网运行",
+      "manufacturer": "华为",
+      "modelNo": "SUN2000-80",
+      "commissionDate": "2021-06-18",
+      "archiveStatus": "ARCHIVED",
+      "dataBaseline": "LOCAL",
+      "sync": "Y",
+      "remark": ""
+    },
+    {
+      "templateName": "光伏电站台账模板",
+      "emsId": "SEED-LG10",
+      "code": "LEDG10",
+      "deviceName": "金坛光伏一期",
+      "stationName": "金坛光伏升压站",
+      "deviceType": "SOLAR",
+      "ratedCapacity": 60,
+      "kvnom": 110,
+      "pmax": 60,
+      "pmin": 0,
+      "areaName": "金坛区",
+      "dispatchRelation": "地调调度",
+      "deviceStatus": "1",
+      "runState": "并网运行",
+      "manufacturer": "正信",
+      "modelNo": "ZX-60",
+      "commissionDate": "2021-12-30",
+      "archiveStatus": "ARCHIVED",
+      "dataBaseline": "LOCAL",
+      "sync": "Y",
+      "remark": ""
+    },
+    {
+      "templateName": "光伏电站台账模板",
+      "emsId": "SEED-LG11",
+      "code": "LEDG11",
+      "deviceName": "云溪光伏电站",
+      "stationName": "云溪工业园",
+      "deviceType": "SOLAR",
+      "ratedCapacity": 30,
+      "kvnom": 110,
+      "pmax": 30,
+      "pmin": 0,
+      "areaName": "金坛区",
+      "dispatchRelation": "地调调度",
+      "deviceStatus": "1",
+      "runState": "并网运行",
+      "manufacturer": "正信",
+      "modelNo": "ZX-30",
+      "commissionDate": "2022-04-20",
+      "archiveStatus": "ARCHIVED",
+      "dataBaseline": "LOCAL",
+      "sync": "Y",
+      "remark": ""
+    },
+    {
+      "templateName": "光伏电站台账模板",
+      "emsId": "SEED-LG12",
+      "code": "LEDG12",
+      "deviceName": "长荡湖风电场",
+      "stationName": "长荡湖风电升压站",
+      "deviceType": "WIND",
+      "ratedCapacity": 150,
+      "kvnom": 110,
+      "pmax": 150,
+      "pmin": 0,
+      "areaName": "金坛区",
+      "dispatchRelation": "地调调度",
+      "deviceStatus": "1",
+      "runState": "并网运行",
+      "manufacturer": "金风",
+      "modelNo": "GW-150",
+      "commissionDate": "2021-10-01",
+      "archiveStatus": "ARCHIVED",
+      "dataBaseline": "LOCAL",
+      "sync": "Y",
+      "remark": ""
+    },
+    {
+      "templateName": "光伏电站台账模板",
+      "emsId": "SEED-LG13",
+      "code": "LEDG13",
+      "deviceName": "茅山风电场",
+      "stationName": "茅山风电升压站",
+      "deviceType": "WIND",
+      "ratedCapacity": 80,
+      "kvnom": 110,
+      "pmax": 80,
+      "pmin": 0,
+      "areaName": "金坛区",
+      "dispatchRelation": "地调调度",
+      "deviceStatus": "1",
+      "runState": "并网运行",
+      "manufacturer": "金风",
+      "modelNo": "GW-80",
+      "commissionDate": "2022-08-15",
+      "archiveStatus": "ARCHIVED",
+      "dataBaseline": "LOCAL",
+      "sync": "Y",
+      "remark": ""
+    },
+    {
+      "templateName": "储能电站台账模板",
+      "emsId": "SEED-LG14",
+      "code": "LEDG14",
+      "deviceName": "盐湖储能电站",
+      "stationName": "盐湖储能站",
+      "deviceType": "STORAGE",
+      "ratedCapacity": 300,
+      "kvnom": 110,
+      "pmax": 300,
+      "pmin": -300,
+      "areaName": "金坛区",
+      "dispatchRelation": "地调调度",
+      "deviceStatus": "1",
+      "runState": "并网运行",
+      "manufacturer": "中储国能",
+      "modelNo": "CAES-300",
+      "commissionDate": "2022-05-30",
+      "archiveStatus": "ARCHIVED",
+      "dataBaseline": "LOCAL",
+      "sync": "Y",
+      "remark": "压缩空气储能示范项目"
+    },
+    {
+      "templateName": "储能电站台账模板",
+      "emsId": "SEED-LG15",
+      "code": "LEDG15",
+      "deviceName": "孟河储能电站",
+      "stationName": "孟河储能站",
+      "deviceType": "STORAGE",
+      "ratedCapacity": 100,
+      "kvnom": 110,
+      "pmax": 100,
+      "pmin": -100,
+      "areaName": "新北区",
+      "dispatchRelation": "地调调度",
+      "deviceStatus": "1",
+      "runState": "并网运行",
+      "manufacturer": "宁德时代",
+      "modelNo": "LFP-100",
+      "commissionDate": "2023-03-10",
+      "archiveStatus": "UNARCHIVED",
+      "dataBaseline": "LOCAL",
+      "sync": "N",
+      "remark": ""
+    },
+    {
+      "templateName": "光伏电站台账模板",
+      "emsId": "SEED-LG16",
+      "code": "LEDG16",
+      "deviceName": "雪溪光伏电站",
+      "stationName": "雪溪光伏升压站",
+      "deviceType": "SOLAR",
+      "ratedCapacity": 40,
+      "kvnom": 110,
+      "pmax": 40,
+      "pmin": 0,
+      "areaName": "武进区",
+      "dispatchRelation": "地调调度",
+      "deviceStatus": "1",
+      "runState": "并网运行",
+      "manufacturer": "天合",
+      "modelNo": "TH-40",
+      "commissionDate": "2023-06-01",
+      "archiveStatus": "UNARCHIVED",
+      "dataBaseline": "LOCAL",
+      "sync": "N",
+      "remark": ""
+    },
+    {
+      "templateName": "光伏电站台账模板",
+      "emsId": "SEED-LG17",
+      "code": "LEDG17",
+      "deviceName": "龙山风电场",
+      "stationName": "龙山风电升压站",
+      "deviceType": "WIND",
+      "ratedCapacity": 50,
+      "kvnom": 110,
+      "pmax": 50,
+      "pmin": 0,
+      "areaName": "武进区",
+      "dispatchRelation": "地调调度",
+      "deviceStatus": "1",
+      "runState": "并网运行",
+      "manufacturer": "金风",
+      "modelNo": "GW-50",
+      "commissionDate": "2023-09-20",
+      "archiveStatus": "UNARCHIVED",
+      "dataBaseline": "LOCAL",
+      "sync": "N",
+      "remark": ""
+    },
+    {
+      "templateName": "储能电站台账模板",
+      "emsId": "SEED-LG18",
+      "code": "LEDG18",
+      "deviceName": "湖滨储能电站",
+      "stationName": "湖滨储能站",
+      "deviceType": "STORAGE",
+      "ratedCapacity": 50,
+      "kvnom": 110,
+      "pmax": 50,
+      "pmin": -50,
+      "areaName": "武进区",
+      "dispatchRelation": "地调调度",
+      "deviceStatus": "1",
+      "runState": "并网运行",
+      "manufacturer": "宁德时代",
+      "modelNo": "LFP-50",
+      "commissionDate": "2024-01-15",
+      "archiveStatus": "ARCHIVED",
+      "dataBaseline": "LOCAL",
+      "sync": "Y",
+      "remark": ""
+    },
+    {
+      "templateName": "机组台账模板",
+      "emsId": "SEED-LG19",
+      "code": "LEDG19",
+      "deviceName": "运河热电",
+      "stationName": "运河热电厂",
+      "deviceType": "BIOMASS",
+      "ratedCapacity": 30,
+      "kvnom": 110,
+      "pmax": 30,
+      "pmin": 0,
+      "areaName": "金坛区",
+      "dispatchRelation": "地调调度",
+      "deviceStatus": "1",
+      "runState": "并网运行",
+      "manufacturer": "杭锅",
+      "modelNo": "BIO-30",
+      "commissionDate": "2020-11-02",
+      "archiveStatus": "ARCHIVED",
+      "dataBaseline": "LOCAL",
+      "sync": "Y",
+      "remark": ""
+    },
+    {
+      "templateName": "光伏电站台账模板",
+      "emsId": "SEED-LG20",
+      "code": "LEDG20",
+      "deviceName": "望山光伏电站",
+      "stationName": "望山光伏升压站",
+      "deviceType": "SOLAR",
+      "ratedCapacity": 25,
+      "kvnom": 110,
+      "pmax": 25,
+      "pmin": 0,
+      "areaName": "天宁区",
+      "dispatchRelation": "地调调度",
+      "deviceStatus": "1",
+      "runState": "并网运行",
+      "manufacturer": "天合",
+      "modelNo": "TH-25",
+      "commissionDate": "2022-09-15",
+      "archiveStatus": "ARCHIVED",
+      "dataBaseline": "LOCAL",
+      "sync": "Y",
+      "remark": ""
+    },
+    {
+      "templateName": "光伏电站台账模板",
+      "emsId": "SEED-LG21",
+      "code": "LEDG21",
+      "deviceName": "柳庄光伏电站",
+      "stationName": "柳庄光伏升压站",
+      "deviceType": "SOLAR",
+      "ratedCapacity": 18,
+      "kvnom": 110,
+      "pmax": 18,
+      "pmin": 0,
+      "areaName": "钟楼区",
+      "dispatchRelation": "地调调度",
+      "deviceStatus": "1",
+      "runState": "并网运行",
+      "manufacturer": "天合",
+      "modelNo": "TH-18",
+      "commissionDate": "2022-12-01",
+      "archiveStatus": "ARCHIVED",
+      "dataBaseline": "LOCAL",
+      "sync": "Y",
+      "remark": ""
+    },
+    {
+      "templateName": "光伏电站台账模板",
+      "emsId": "SEED-LG22",
+      "code": "LEDG22",
+      "deviceName": "溪南光伏电站",
+      "stationName": "溪南光伏升压站",
+      "deviceType": "SOLAR",
+      "ratedCapacity": 35,
+      "kvnom": 110,
+      "pmax": 35,
+      "pmin": 0,
+      "areaName": "金坛区",
+      "dispatchRelation": "地调调度",
+      "deviceStatus": "1",
+      "runState": "并网运行",
+      "manufacturer": "正信",
+      "modelNo": "ZX-35",
+      "commissionDate": "2023-04-18",
+      "archiveStatus": "ARCHIVED",
+      "dataBaseline": "LOCAL",
+      "sync": "Y",
+      "remark": ""
+    },
+    {
+      "templateName": "光伏电站台账模板",
+      "emsId": "SEED-LG23",
+      "code": "LEDG23",
+      "deviceName": "青枫风电场",
+      "stationName": "青枫风电升压站",
+      "deviceType": "WIND",
+      "ratedCapacity": 45,
+      "kvnom": 110,
+      "pmax": 45,
+      "pmin": 0,
+      "areaName": "武进区",
+      "dispatchRelation": "地调调度",
+      "deviceStatus": "1",
+      "runState": "并网运行",
+      "manufacturer": "金风",
+      "modelNo": "GW-45",
+      "commissionDate": "2023-07-25",
+      "archiveStatus": "ARCHIVED",
+      "dataBaseline": "LOCAL",
+      "sync": "Y",
+      "remark": ""
+    },
+    {
+      "templateName": "储能电站台账模板",
+      "emsId": "SEED-LG24",
+      "code": "LEDG24",
+      "deviceName": "溧阳储能一站",
+      "stationName": "溧阳储能一站",
+      "deviceType": "STORAGE",
+      "ratedCapacity": 60,
+      "kvnom": 110,
+      "pmax": 60,
+      "pmin": -60,
+      "areaName": "溧阳市",
+      "dispatchRelation": "地调调度",
+      "deviceStatus": "1",
+      "runState": "并网运行",
+      "manufacturer": "宁德时代",
+      "modelNo": "LFP-60",
+      "commissionDate": "2023-02-14",
+      "archiveStatus": "ARCHIVED",
+      "dataBaseline": "LOCAL",
+      "sync": "Y",
+      "remark": ""
+    },
+    {
+      "templateName": "储能电站台账模板",
+      "emsId": "SEED-LG25",
+      "code": "LEDG25",
+      "deviceName": "溧阳储能二站",
+      "stationName": "溧阳储能二站",
+      "deviceType": "STORAGE",
+      "ratedCapacity": 60,
+      "kvnom": 110,
+      "pmax": 60,
+      "pmin": -60,
+      "areaName": "溧阳市",
+      "dispatchRelation": "地调调度",
+      "deviceStatus": "1",
+      "runState": "并网运行",
+      "manufacturer": "宁德时代",
+      "modelNo": "LFP-60",
+      "commissionDate": "2023-08-01",
+      "archiveStatus": "ARCHIVED",
+      "dataBaseline": "LOCAL",
+      "sync": "Y",
+      "remark": ""
+    },
+    {
+      "templateName": "储能电站台账模板",
+      "emsId": "SEED-LG26",
+      "code": "LEDG26",
+      "deviceName": "兰庄储能电站",
+      "stationName": "兰庄储能站",
+      "deviceType": "STORAGE",
+      "ratedCapacity": 30,
+      "kvnom": 110,
+      "pmax": 30,
+      "pmin": -30,
+      "areaName": "天宁区",
+      "dispatchRelation": "地调调度",
+      "deviceStatus": "1",
+      "runState": "并网运行",
+      "manufacturer": "宁德时代",
+      "modelNo": "LFP-30",
+      "commissionDate": "2024-03-20",
+      "archiveStatus": "PENDING",
+      "dataBaseline": "LOCAL",
+      "sync": "Y",
+      "remark": ""
+    },
+    {
+      "templateName": "馈线台账模板",
+      "emsId": "SEED-LG27",
+      "code": "LEDG27",
+      "deviceName": "滨江路开关站1号馈线",
+      "stationName": "滨江路开关站",
+      "deviceType": "OTHER",
+      "ratedCapacity": 0,
+      "kvnom": 110,
+      "pmax": 0,
+      "pmin": 0,
+      "areaName": "新北区",
+      "dispatchRelation": "地调调度",
+      "deviceStatus": "1",
+      "runState": "并网运行",
+      "manufacturer": "许继",
+      "modelNo": "LGJ-400",
+      "commissionDate": "2019-05-06",
+      "archiveStatus": "ARCHIVED",
+      "dataBaseline": "LOCAL",
+      "sync": "Y",
+      "remark": ""
+    },
+    {
+      "templateName": "馈线台账模板",
+      "emsId": "SEED-LG28",
+      "code": "LEDG28",
+      "deviceName": "晋陵变2号馈线",
+      "stationName": "晋陵变",
+      "deviceType": "OTHER",
+      "ratedCapacity": 0,
+      "kvnom": 110,
+      "pmax": 0,
+      "pmin": 0,
+      "areaName": "新北区",
+      "dispatchRelation": "地调调度",
+      "deviceStatus": "1",
+      "runState": "并网运行",
+      "manufacturer": "西开",
+      "modelNo": "GIS",
+      "commissionDate": "2018-10-12",
+      "archiveStatus": "ARCHIVED",
+      "dataBaseline": "LOCAL",
+      "sync": "Y",
+      "remark": ""
+    },
+    {
+      "templateName": "馈线台账模板",
+      "emsId": "SEED-LG29",
+      "code": "LEDG29",
+      "deviceName": "湖滨变3号馈线",
+      "stationName": "湖滨变",
+      "deviceType": "OTHER",
+      "ratedCapacity": 0,
+      "kvnom": 110,
+      "pmax": 0,
+      "pmin": 0,
+      "areaName": "武进区",
+      "dispatchRelation": "地调调度",
+      "deviceStatus": "1",
+      "runState": "并网运行",
+      "manufacturer": "西开",
+      "modelNo": "GIS",
+      "commissionDate": "2017-04-22",
+      "archiveStatus": "ARCHIVED",
+      "dataBaseline": "LOCAL",
+      "sync": "Y",
+      "remark": ""
+    },
+    {
+      "templateName": "馈线台账模板",
+      "emsId": "SEED-LG30",
+      "code": "LEDG30",
+      "deviceName": "濑水变1号馈线",
+      "stationName": "濑水变",
+      "deviceType": "OTHER",
+      "ratedCapacity": 0,
+      "kvnom": 110,
+      "pmax": 0,
+      "pmin": 0,
+      "areaName": "溧阳市",
+      "dispatchRelation": "地调调度",
+      "deviceStatus": "1",
+      "runState": "并网运行",
+      "manufacturer": "保变",
+      "modelNo": "SFSZ",
+      "commissionDate": "2016-08-30",
+      "archiveStatus": "ARCHIVED",
+      "dataBaseline": "LOCAL",
+      "sync": "Y",
+      "remark": ""
+    },
+    {
+      "templateName": "馈线台账模板",
+      "emsId": "SEED-LG31",
+      "code": "LEDG31",
+      "deviceName": "金麓变2号馈线",
+      "stationName": "金麓变",
+      "deviceType": "OTHER",
+      "ratedCapacity": 0,
+      "kvnom": 110,
+      "pmax": 0,
+      "pmin": 0,
+      "areaName": "金坛区",
+      "dispatchRelation": "地调调度",
+      "deviceStatus": "1",
+      "runState": "并网运行",
+      "manufacturer": "保变",
+      "modelNo": "SFSZ",
+      "commissionDate": "2019-12-11",
+      "archiveStatus": "ARCHIVED",
+      "dataBaseline": "LOCAL",
+      "sync": "Y",
+      "remark": ""
+    },
+    {
+      "templateName": "馈线台账模板",
+      "emsId": "SEED-LG32",
+      "code": "LEDG32",
+      "deviceName": "清源变1号馈线",
+      "stationName": "清源变",
+      "deviceType": "OTHER",
+      "ratedCapacity": 0,
+      "kvnom": 110,
+      "pmax": 0,
+      "pmin": 0,
+      "areaName": "钟楼区",
+      "dispatchRelation": "地调调度",
+      "deviceStatus": "1",
+      "runState": "并网运行",
+      "manufacturer": "西开",
+      "modelNo": "GIS",
+      "commissionDate": "2018-03-03",
+      "archiveStatus": "ARCHIVED",
+      "dataBaseline": "LOCAL",
+      "sync": "Y",
+      "remark": ""
+    }
+  ],
+  "mappings": [
+    {
+      "name": "馈线-名称映射",
+      "templateName": "馈线台账模板",
+      "sourceField": "lineName",
+      "targetField": "deviceName",
+      "transformRule": "STRING",
+      "enabled": "Y"
+    }
+  ],
+  "batches": [
+    {
+      "seq": "1",
+      "totalCount": 6,
+      "successCount": 5,
+      "failCount": 1,
+      "status": "DONE"
+    },
+    {
+      "seq": "2",
+      "totalCount": 4,
+      "successCount": 4,
+      "failCount": 0,
+      "status": "DONE"
+    },
+    {
+      "seq": "3",
+      "totalCount": 3,
+      "successCount": 0,
+      "failCount": 0,
+      "status": "CANCELLED"
+    },
+    {
+      "seq": "4",
+      "totalCount": 8,
+      "successCount": 7,
+      "failCount": 1,
+      "status": "DONE"
+    },
+    {
+      "seq": "5",
+      "totalCount": 5,
+      "successCount": 0,
+      "failCount": 5,
+      "status": "FAILED"
+    },
+    {
+      "seq": "6",
+      "totalCount": 6,
+      "successCount": 6,
+      "failCount": 0,
+      "status": "DONE"
+    },
+    {
+      "seq": "7",
+      "totalCount": 7,
+      "successCount": 5,
+      "failCount": 1,
+      "status": "RUNNING"
+    }
+  ],
+  "reports": [
+    {
+      "batchSeq": "1",
+      "ledgerEmsId": "SEED-LG01",
+      "status": "REPORTED",
+      "reviewStatus": "APPROVED",
+      "attemptCount": 1,
+      "responseMsg": "上报成功"
+    },
+    {
+      "batchSeq": "1",
+      "ledgerEmsId": "SEED-LG02",
+      "status": "REPORTED",
+      "reviewStatus": "APPROVED",
+      "attemptCount": 1,
+      "responseMsg": "上报成功"
+    },
+    {
+      "batchSeq": "1",
+      "ledgerEmsId": "SEED-LG03",
+      "status": "REPORTED",
+      "reviewStatus": "APPROVED",
+      "attemptCount": 1,
+      "responseMsg": "上报成功"
+    },
+    {
+      "batchSeq": "1",
+      "ledgerEmsId": "SEED-LG04",
+      "status": "REPORTED",
+      "reviewStatus": "IN_REVIEW",
+      "attemptCount": 1,
+      "responseMsg": "上报成功"
+    },
+    {
+      "batchSeq": "1",
+      "ledgerEmsId": "SEED-LG05",
+      "status": "REPORTED",
+      "reviewStatus": "IN_REVIEW",
+      "attemptCount": 1,
+      "responseMsg": "上报成功"
+    },
+    {
+      "batchSeq": "1",
+      "ledgerEmsId": "SEED-LG08",
+      "status": "FAILED",
+      "reviewStatus": null,
+      "attemptCount": 3,
+      "responseMsg": "D5000 通道超时,已转人工处理"
+    },
+    {
+      "batchSeq": "2",
+      "ledgerEmsId": "SEED-LG08",
+      "status": "REPORTED",
+      "reviewStatus": "APPROVED",
+      "attemptCount": 1,
+      "responseMsg": "上报成功"
+    },
+    {
+      "batchSeq": "2",
+      "ledgerEmsId": "SEED-LG09",
+      "status": "REPORTED",
+      "reviewStatus": "APPROVED",
+      "attemptCount": 1,
+      "responseMsg": "上报成功"
+    },
+    {
+      "batchSeq": "2",
+      "ledgerEmsId": "SEED-LG10",
+      "status": "REPORTED",
+      "reviewStatus": "APPROVED",
+      "attemptCount": 1,
+      "responseMsg": "上报成功"
+    },
+    {
+      "batchSeq": "2",
+      "ledgerEmsId": "SEED-LG11",
+      "status": "REPORTED",
+      "reviewStatus": "APPROVED",
+      "attemptCount": 1,
+      "responseMsg": "上报成功"
+    },
+    {
+      "batchSeq": "3",
+      "ledgerEmsId": "SEED-LG12",
+      "status": "CANCELLED",
+      "reviewStatus": null,
+      "attemptCount": 0,
+      "responseMsg": "批次取消,未执行"
+    },
+    {
+      "batchSeq": "3",
+      "ledgerEmsId": "SEED-LG13",
+      "status": "CANCELLED",
+      "reviewStatus": null,
+      "attemptCount": 0,
+      "responseMsg": "批次取消,未执行"
+    },
+    {
+      "batchSeq": "3",
+      "ledgerEmsId": "SEED-LG14",
+      "status": "CANCELLED",
+      "reviewStatus": null,
+      "attemptCount": 0,
+      "responseMsg": "批次取消,未执行"
+    },
+    {
+      "batchSeq": "4",
+      "ledgerEmsId": "SEED-LG20",
+      "status": "REPORTED",
+      "reviewStatus": "APPROVED",
+      "attemptCount": 1,
+      "responseMsg": "上报成功"
+    },
+    {
+      "batchSeq": "4",
+      "ledgerEmsId": "SEED-LG21",
+      "status": "REPORTED",
+      "reviewStatus": "APPROVED",
+      "attemptCount": 1,
+      "responseMsg": "上报成功"
+    },
+    {
+      "batchSeq": "4",
+      "ledgerEmsId": "SEED-LG22",
+      "status": "REPORTED",
+      "reviewStatus": "APPROVED",
+      "attemptCount": 1,
+      "responseMsg": "上报成功"
+    },
+    {
+      "batchSeq": "4",
+      "ledgerEmsId": "SEED-LG23",
+      "status": "REPORTED",
+      "reviewStatus": "APPROVED",
+      "attemptCount": 1,
+      "responseMsg": "上报成功"
+    },
+    {
+      "batchSeq": "4",
+      "ledgerEmsId": "SEED-LG24",
+      "status": "REPORTED",
+      "reviewStatus": "APPROVED",
+      "attemptCount": 1,
+      "responseMsg": "上报成功"
+    },
+    {
+      "batchSeq": "4",
+      "ledgerEmsId": "SEED-LG25",
+      "status": "REPORTED",
+      "reviewStatus": "REJECTED",
+      "attemptCount": 1,
+      "responseMsg": "省调专业审核未通过(数据与省调侧存量不一致)",
+      "reviewTime": "Y"
+    },
+    {
+      "batchSeq": "4",
+      "ledgerEmsId": "SEED-LG26",
+      "status": "REPORTED",
+      "reviewStatus": "IN_REVIEW",
+      "attemptCount": 1,
+      "responseMsg": "上报成功"
+    },
+    {
+      "batchSeq": "4",
+      "ledgerEmsId": "SEED-LG27",
+      "status": "FAILED",
+      "reviewStatus": null,
+      "attemptCount": 3,
+      "responseMsg": "省调侧返回数据格式校验失败"
+    },
+    {
+      "batchSeq": "5",
+      "ledgerEmsId": "SEED-LG28",
+      "status": "FAILED",
+      "reviewStatus": null,
+      "attemptCount": 3,
+      "responseMsg": "省调侧接口连接失败(Connection refused)"
+    },
+    {
+      "batchSeq": "5",
+      "ledgerEmsId": "SEED-LG29",
+      "status": "FAILED",
+      "reviewStatus": null,
+      "attemptCount": 3,
+      "responseMsg": "省调侧接口连接失败(Connection refused)"
+    },
+    {
+      "batchSeq": "5",
+      "ledgerEmsId": "SEED-LG30",
+      "status": "FAILED",
+      "reviewStatus": null,
+      "attemptCount": 3,
+      "responseMsg": "省调侧接口连接失败(Connection refused)"
+    },
+    {
+      "batchSeq": "5",
+      "ledgerEmsId": "SEED-LG31",
+      "status": "FAILED",
+      "reviewStatus": null,
+      "attemptCount": 3,
+      "responseMsg": "上报超时(30s 无响应)"
+    },
+    {
+      "batchSeq": "5",
+      "ledgerEmsId": "SEED-LG32",
+      "status": "FAILED",
+      "reviewStatus": null,
+      "attemptCount": 3,
+      "responseMsg": "上报超时(30s 无响应)"
+    },
+    {
+      "batchSeq": "6",
+      "ledgerEmsId": "SEED-LG01",
+      "status": "REPORTED",
+      "reviewStatus": "APPROVED",
+      "attemptCount": 1,
+      "responseMsg": "上报成功"
+    },
+    {
+      "batchSeq": "6",
+      "ledgerEmsId": "SEED-LG05",
+      "status": "REPORTED",
+      "reviewStatus": "APPROVED",
+      "attemptCount": 1,
+      "responseMsg": "上报成功"
+    },
+    {
+      "batchSeq": "6",
+      "ledgerEmsId": "SEED-LG06",
+      "status": "REPORTED",
+      "reviewStatus": "APPROVED",
+      "attemptCount": 1,
+      "responseMsg": "上报成功"
+    },
+    {
+      "batchSeq": "6",
+      "ledgerEmsId": "SEED-LG07",
+      "status": "REPORTED",
+      "reviewStatus": "APPROVED",
+      "attemptCount": 1,
+      "responseMsg": "上报成功"
+    },
+    {
+      "batchSeq": "6",
+      "ledgerEmsId": "SEED-LG14",
+      "status": "REPORTED",
+      "reviewStatus": "REJECTED",
+      "attemptCount": 1,
+      "responseMsg": "省调专业审核未通过(数据与省调侧存量不一致)",
+      "reviewTime": "Y"
+    },
+    {
+      "batchSeq": "6",
+      "ledgerEmsId": "SEED-LG12",
+      "status": "REPORTED",
+      "reviewStatus": "IN_REVIEW",
+      "attemptCount": 1,
+      "responseMsg": "上报成功"
+    },
+    {
+      "batchSeq": "7",
+      "ledgerEmsId": "SEED-LG03",
+      "status": "REPORTED",
+      "reviewStatus": "APPROVED",
+      "attemptCount": 1,
+      "responseMsg": "上报成功"
+    },
+    {
+      "batchSeq": "7",
+      "ledgerEmsId": "SEED-LG04",
+      "status": "REPORTED",
+      "reviewStatus": "APPROVED",
+      "attemptCount": 1,
+      "responseMsg": "上报成功"
+    },
+    {
+      "batchSeq": "7",
+      "ledgerEmsId": "SEED-LG08",
+      "status": "REPORTED",
+      "reviewStatus": "IN_REVIEW",
+      "attemptCount": 1,
+      "responseMsg": "上报成功"
+    },
+    {
+      "batchSeq": "7",
+      "ledgerEmsId": "SEED-LG09",
+      "status": "REPORTED",
+      "reviewStatus": "IN_REVIEW",
+      "attemptCount": 1,
+      "responseMsg": "上报成功"
+    },
+    {
+      "batchSeq": "7",
+      "ledgerEmsId": "SEED-LG10",
+      "status": "FAILED",
+      "reviewStatus": null,
+      "attemptCount": 2,
+      "responseMsg": "D5000 通道抖动,等待重试"
+    },
+    {
+      "batchSeq": "7",
+      "ledgerEmsId": "SEED-LG11",
+      "status": "PENDING",
+      "reviewStatus": null,
+      "attemptCount": 0,
+      "responseMsg": "待执行"
+    },
+    {
+      "batchSeq": "7",
+      "ledgerEmsId": "SEED-LG12",
+      "status": "PENDING",
+      "reviewStatus": null,
+      "attemptCount": 0,
+      "responseMsg": "待执行"
+    }
+  ],
+  "drafts": [
+    {
+      "targetEmsId": "SEED-LG01",
+      "templateName": "机组台账模板",
+      "areaName": "新北区",
+      "editBy": "张县调",
+      "status": "PENDING",
+      "editTime": "2026-08-29 15:20:00",
+      "payload": {
+        "ratedCapacity": 1050,
+        "remark": "#1机组增容改造完成"
+      }
+    },
+    {
+      "targetEmsId": "SEED-LG14",
+      "templateName": "储能电站台账模板",
+      "areaName": "金坛区",
+      "editBy": "李县调",
+      "status": "PENDING",
+      "editTime": "2026-08-30 09:40:00",
+      "payload": {
+        "ratedCapacity": 320,
+        "pmax": 320
+      }
+    },
+    {
+      "targetEmsId": "SEED-LG08",
+      "templateName": "光伏电站台账模板",
+      "areaName": "溧阳市",
+      "editBy": "王县调",
+      "status": "PENDING",
+      "editTime": "2026-08-30 16:10:00",
+      "payload": {
+        "ratedCapacity": 120,
+        "runState": "并网运行(二期并网)"
+      }
+    },
+    {
+      "targetEmsId": null,
+      "templateName": "储能电站台账模板",
+      "areaName": "武进区",
+      "editBy": "赵县调",
+      "status": "PENDING",
+      "editTime": "2026-08-31 10:05:00",
+      "payload": {
+        "deviceName": "礼河储能电站",
+        "stationName": "礼河储能站",
+        "deviceType": "STORAGE",
+        "ratedCapacity": 100,
+        "areaName": "武进区",
+        "dispatchRelation": "县调调度",
+        "dataBaseline": "COUNTY",
+        "kvnom": 110
+      }
+    },
+    {
+      "targetEmsId": null,
+      "templateName": "光伏电站台账模板",
+      "areaName": "天宁区",
+      "editBy": "孙县调",
+      "status": "PENDING",
+      "editTime": "2026-08-31 14:30:00",
+      "payload": {
+        "deviceName": "望山分布式光伏二期",
+        "stationName": "望山光伏升压站",
+        "deviceType": "SOLAR",
+        "ratedCapacity": 15,
+        "areaName": "天宁区",
+        "dispatchRelation": "县调调度",
+        "dataBaseline": "COUNTY",
+        "kvnom": 110
+      }
+    },
+    {
+      "targetEmsId": "SEED-LG05",
+      "templateName": "机组台账模板",
+      "areaName": "溧阳市",
+      "editBy": "王县调",
+      "status": "APPROVED",
+      "editTime": "2026-08-20 10:30:00",
+      "payload": {
+        "ratedCapacity": 255
+      }
+    },
+    {
+      "targetEmsId": "SEED-LG10",
+      "templateName": "光伏电站台账模板",
+      "areaName": "金坛区",
+      "editBy": "李县调",
+      "status": "REJECTED",
+      "editTime": "2026-08-18 14:00:00",
+      "payload": {
+        "ratedCapacity": 120
+      }
+    }
+  ],
+  "archives": [
+    {
+      "ledgerEmsId": "SEED-LG01",
+      "archiveType": "UPDATE",
+      "reviewStatus": "APPROVED",
+      "reviewer": "王地调",
+      "archiveBy": "张县调",
+      "opinion": "容量数据与电厂上报一致"
+    },
+    {
+      "ledgerEmsId": "SEED-LG02",
+      "archiveType": "UPDATE",
+      "reviewStatus": "APPROVED",
+      "reviewer": "王地调",
+      "archiveBy": "张县调",
+      "opinion": "同意归档"
+    },
+    {
+      "ledgerEmsId": "SEED-LG05",
+      "archiveType": "UPDATE",
+      "reviewStatus": "APPROVED",
+      "reviewer": "李地调",
+      "archiveBy": "王县调",
+      "opinion": "抽蓄容量修正无误"
+    },
+    {
+      "ledgerEmsId": "SEED-LG11",
+      "archiveType": "NEW",
+      "reviewStatus": "APPROVED",
+      "reviewer": "李地调",
+      "archiveBy": "李县调",
+      "opinion": "新建光伏资料齐全"
+    },
+    {
+      "ledgerEmsId": "SEED-LG24",
+      "archiveType": "NEW",
+      "reviewStatus": "APPROVED",
+      "reviewer": "王地调",
+      "archiveBy": "王县调",
+      "opinion": "同意"
+    },
+    {
+      "ledgerEmsId": "SEED-LG25",
+      "archiveType": "NEW",
+      "reviewStatus": "APPROVED",
+      "reviewer": "王地调",
+      "archiveBy": "王县调",
+      "opinion": "同意"
+    },
+    {
+      "ledgerEmsId": "SEED-LG26",
+      "archiveType": "NEW",
+      "reviewStatus": "APPROVED",
+      "reviewer": "李地调",
+      "archiveBy": "孙县调",
+      "opinion": "资料齐全"
+    },
+    {
+      "ledgerEmsId": "SEED-LG23",
+      "archiveType": "UPDATE",
+      "reviewStatus": "APPROVED",
+      "reviewer": "李地调",
+      "archiveBy": "赵县调",
+      "opinion": "容量更新确认"
+    },
+    {
+      "ledgerEmsId": "SEED-LG10",
+      "archiveType": "UPDATE",
+      "reviewStatus": "REJECTED",
+      "reviewer": "王地调",
+      "archiveBy": "李县调",
+      "opinion": "容量数据与省调侧不一致,请核实后再报"
+    },
+    {
+      "ledgerEmsId": "SEED-LG13",
+      "archiveType": "UPDATE",
+      "reviewStatus": "REJECTED",
+      "reviewer": "李地调",
+      "archiveBy": "李县调",
+      "opinion": "缺少并网批复文件"
+    },
+    {
+      "ledgerEmsId": "SEED-LG22",
+      "archiveType": "NEW",
+      "reviewStatus": "REJECTED",
+      "reviewer": "王地调",
+      "archiveBy": "李县调",
+      "opinion": "厂站名称不规范"
+    },
+    {
+      "ledgerEmsId": "SEED-LG15",
+      "archiveType": "NEW",
+      "reviewStatus": "REJECTED",
+      "reviewer": "李地调",
+      "archiveBy": "张县调",
+      "opinion": "储能电站未提供调度关系证明"
+    }
+  ],
+  "syncLogs": [
+    {
+      "syncBatch": "SYNC20260818001",
+      "status": "SUCCESS",
+      "totalCount": 31,
+      "successCount": 31,
+      "startTime": "2026-08-18 06:00:00",
+      "endTime": "2026-08-18 06:01:20",
+      "errorMsg": "",
+      "remark": "每日例行同步"
+    },
+    {
+      "syncBatch": "SYNC20260819001",
+      "status": "SUCCESS",
+      "totalCount": 31,
+      "successCount": 31,
+      "startTime": "2026-08-19 06:00:00",
+      "endTime": "2026-08-19 06:01:10",
+      "errorMsg": "",
+      "remark": ""
+    },
+    {
+      "syncBatch": "SYNC20260820001",
+      "status": "PARTIAL",
+      "totalCount": 31,
+      "successCount": 28,
+      "startTime": "2026-08-20 06:00:00",
+      "endTime": "2026-08-20 06:02:45",
+      "errorMsg": "3 条机组数据采样越限,已跳过",
+      "remark": "每日例行同步"
+    },
+    {
+      "syncBatch": "SYNC20260821001",
+      "status": "SUCCESS",
+      "totalCount": 31,
+      "successCount": 31,
+      "startTime": "2026-08-21 06:00:00",
+      "endTime": "2026-08-21 06:01:15",
+      "errorMsg": "",
+      "remark": ""
+    },
+    {
+      "syncBatch": "SYNC20260822001",
+      "status": "SUCCESS",
+      "totalCount": 31,
+      "successCount": 31,
+      "startTime": "2026-08-22 06:00:00",
+      "endTime": "2026-08-22 06:01:05",
+      "errorMsg": "",
+      "remark": ""
+    },
+    {
+      "syncBatch": "SYNC20260823001",
+      "status": "FAILED",
+      "totalCount": 31,
+      "successCount": 0,
+      "startTime": "2026-08-23 06:00:00",
+      "endTime": "2026-08-23 06:05:00",
+      "errorMsg": "D5000 前置库连接超时",
+      "remark": "每日例行同步"
+    },
+    {
+      "syncBatch": "SYNC20260823002",
+      "status": "SUCCESS",
+      "totalCount": 31,
+      "successCount": 31,
+      "startTime": "2026-08-23 10:30:00",
+      "endTime": "2026-08-23 10:31:30",
+      "errorMsg": "",
+      "remark": "人工补同步"
+    },
+    {
+      "syncBatch": "SYNC20260824001",
+      "status": "SUCCESS",
+      "totalCount": 31,
+      "successCount": 31,
+      "startTime": "2026-08-24 06:00:00",
+      "endTime": "2026-08-24 06:01:25",
+      "errorMsg": "",
+      "remark": ""
+    },
+    {
+      "syncBatch": "SYNC20260825001",
+      "status": "SUCCESS",
+      "totalCount": 31,
+      "successCount": 31,
+      "startTime": "2026-08-25 06:00:00",
+      "endTime": "2026-08-25 06:01:10",
+      "errorMsg": "",
+      "remark": ""
+    },
+    {
+      "syncBatch": "SYNC20260826001",
+      "status": "PARTIAL",
+      "totalCount": 31,
+      "successCount": 30,
+      "startTime": "2026-08-26 06:00:00",
+      "endTime": "2026-08-26 06:02:00",
+      "errorMsg": "1 条馈线数据缺失",
+      "remark": "每日例行同步"
+    },
+    {
+      "syncBatch": "SYNC20260827001",
+      "status": "SUCCESS",
+      "totalCount": 31,
+      "successCount": 31,
+      "startTime": "2026-08-27 06:00:00",
+      "endTime": "2026-08-27 06:01:18",
+      "errorMsg": "",
+      "remark": ""
+    },
+    {
+      "syncBatch": "SYNC20260831001",
+      "status": "SUCCESS",
+      "totalCount": 31,
+      "successCount": 31,
+      "startTime": "2026-08-31 06:00:00",
+      "endTime": "2026-08-31 06:01:22",
+      "errorMsg": "",
+      "remark": "每日例行同步"
+    }
+  ]
+}

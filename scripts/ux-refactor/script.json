@@ -1,0 +1,8 @@
+{
+	"id": "ux-refactor",
+	"name": "ux-refactor",
+	"desc": "UX设计",
+	"start": "npm run dev",
+	"order": 98,
+	"open": "explorer http://127.0.0.1:3400"
+}

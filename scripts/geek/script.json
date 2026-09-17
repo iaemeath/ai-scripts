@@ -1,0 +1,8 @@
+{
+	"id": "geek",
+	"name": "Geek 卸载器",
+	"desc": "系统软件卸载器（绿色单文件，卸载时自请求管理员权限）",
+	"start": "D:\\soft\\geek.exe",
+	"process": "geek.exe",
+	"order": 1
+}

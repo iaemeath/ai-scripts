@@ -1,0 +1,8 @@
+{
+	"id": "deskflow",
+	"name": "Deskflow",
+	"desc": "键鼠共享（Synergy 开源上游，便携版）",
+	"start": "D:\\soft\\deskflow-1.26.0-win-x64-portable\\deskflow.exe",
+	"process": "deskflow.exe",
+	"order": 3
+}

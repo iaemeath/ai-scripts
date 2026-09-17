@@ -1,0 +1,8 @@
+{
+	"id": "cc-switch",
+	"name": "CC Switch",
+	"desc": "AI 编码代理供应商配置切换器（便携版）",
+	"start": "D:\\soft\\CC-Switch-v3.15.0-Windows-Portable\\cc-switch.exe",
+	"process": "cc-switch.exe",
+	"order": 2
+}

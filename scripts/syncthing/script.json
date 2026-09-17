@@ -1,0 +1,10 @@
+{
+	"id": "syncthing",
+	"name": "Syncthing",
+	"desc": "文件同步（官方 Windows 版，stctl 托管后台；「打开」直达 Web 管理页）",
+	"start": "C:\\Users\\Administrator\\AppData\\Local\\Programs\\Syncthing\\stctl.exe --start",
+	"open": "explorer https://127.0.0.1:8384",
+	"check": "https://127.0.0.1:8384",
+	"stop": "C:\\Users\\Administrator\\AppData\\Local\\Programs\\Syncthing\\stctl.exe --stop",
+	"order": 4
+}
