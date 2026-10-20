@@ -42,3 +42,18 @@ export interface BrowseResult {
 	dirs: string[];
 	files: string[];
 }
+
+/** 卡片日志目录里的一份日志（logs/<时间戳>.log，新→旧排列）。 */
+export interface LogFileInfo {
+	name: string;
+	/** 文件大小（KB，向上取整，最小 1）。 */
+	sizeKB: number;
+	/** 修改时间（epoch ms）。 */
+	mtime: number;
+}
+
+/** 一份日志的尾部内容。 */
+export interface LogTail {
+	name: string;
+	content: string;
+}

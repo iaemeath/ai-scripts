@@ -125,7 +125,7 @@ if (!app.requestSingleInstanceLock()) {
 			trace('T5 server up on 8792');
 		} catch (e) {
 			trace('T5 FAIL server: ' + e.message);
-			dialog.showErrorBox('ai-scripts', `服务启动失败（端口 8792 被占用？）\n${e.message}\n\n若旧版 host 还在运行，请先跑 stop.bat 再重试。`);
+			dialog.showErrorBox('ai-scripts', `服务启动失败（端口 8792 被占用？）\n${e.message}\n\n多为旧实例仍在运行：任务管理器结束 ai-scripts.exe（或 8792 端口的 node.exe）后重试。`);
 			app.quit();
 			return;
 		}

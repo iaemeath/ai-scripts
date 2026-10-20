@@ -66,8 +66,9 @@ scripts.get('/', async (c) => {
 
 /* ===================== 命令路径浏览选择（填启动命令用） ===================== */
 
-/** GET /api/scripts/browse?path=<目录> — 无 path 时返回盘符列表；返回子目录 + 可执行文件。 */
-scripts.get('/browse', (c) => {
+/** GET /api/scripts/browse?path=<目录> — 无 path 时返回盘符列表；返回子目录 + 可执行文件。
+ *  全异步：断连的网络盘等慢介质上 readdir 会挂起数秒，同步版会冻结事件循环拖垮全部轮询。 */
+scripts.get('/browse', async (c) => {
 	const raw = (c.req.query('path') || '').trim();
 	if (!raw) {
 		const drives: string[] = [];
@@ -75,7 +76,7 @@ scripts.get('/browse', (c) => {
 			// C..Z
 			const drive = `${String.fromCharCode(i)}:\\`;
 			try {
-				fs.readdirSync(drive);
+				await fs.promises.readdir(drive);
 				drives.push(drive);
 			} catch {
 				/* 盘符不存在 */
@@ -84,19 +85,23 @@ scripts.get('/browse', (c) => {
 		return c.json({ path: '', parent: null, dirs: drives, files: [] });
 	}
 	const dir = path.resolve(raw);
-	if (!fs.existsSync(dir) || !fs.statSync(dir).isDirectory()) return err(c, 400, `目录不存在: ${dir}`);
+	try {
+		if (!(await fs.promises.stat(dir)).isDirectory()) return err(c, 400, `目录不存在: ${dir}`);
+	} catch {
+		return err(c, 400, `目录不存在: ${dir}`);
+	}
 	const dirs: string[] = [];
 	const files: string[] = [];
-	for (const name of fs.readdirSync(dir)) {
-		if (name.startsWith('.')) continue;
-		const full = path.join(dir, name);
-		try {
-			const st = fs.statSync(full);
-			if (st.isDirectory()) dirs.push(name);
-			else if (/\.(exe|bat|cmd|lnk)$/i.test(name)) files.push(name);
-		} catch {
-			/* 无权限项跳过 */
-		}
+	let entries: fs.Dirent[] = [];
+	try {
+		entries = await fs.promises.readdir(dir, { withFileTypes: true });
+	} catch {
+		entries = []; // 无权限等读取失败按空目录呈现
+	}
+	for (const ent of entries) {
+		if (ent.name.startsWith('.')) continue;
+		if (ent.isDirectory()) dirs.push(ent.name);
+		else if (/\.(exe|bat|cmd|lnk)$/i.test(ent.name)) files.push(ent.name);
 	}
 	const parent = path.dirname(dir);
 	return c.json({
@@ -229,6 +234,48 @@ scripts.post('/:id/stop', async (c) => {
 	const loaded = loadOr404(c);
 	if (loaded instanceof Response) return loaded;
 	return c.json({ ok: true, killed: await stopProc(loaded.id, loaded.manifest.stop, loaded.manifest.process) });
+});
+
+/* ===================== 卡片日志（logs/ 目录列表 + 尾部查看） ===================== */
+
+/** 日志文件名白名单：procman 落盘名是 <ISO时间戳>.log，只放行安全字符，杜绝路径穿越。 */
+const LOG_NAME_RE = /^[a-zA-Z0-9._-]+\.log$/;
+
+/** GET /:id/logs — 列出 logs/ 目录（新→旧），带大小/修改时间。 */
+scripts.get('/:id/logs', async (c) => {
+	const loaded = loadOr404(c);
+	if (loaded instanceof Response) return loaded;
+	const dir = path.join(scriptDir(loaded.id), 'logs');
+	let names: string[] = [];
+	try {
+		names = (await fs.promises.readdir(dir)).filter((n) => n.endsWith('.log')).sort().reverse();
+	} catch {
+		names = []; // 无 logs 目录（从未启动过）按空列表呈现
+	}
+	const items = await Promise.all(names.map(async (name) => {
+		const st = await fs.promises.stat(path.join(dir, name)).catch(() => null);
+		return {
+			name,
+			sizeKB: st ? Math.max(1, Math.round(st.size / 1024)) : 0,
+			mtime: st ? st.mtimeMs : 0,
+		};
+	}));
+	return c.json(items);
+});
+
+/** GET /:id/logs/tail?name=<文件名>&maxLen=<字符数> — 日志尾部（排障 / 看运行输出）。 */
+scripts.get('/:id/logs/tail', async (c) => {
+	const loaded = loadOr404(c);
+	if (loaded instanceof Response) return loaded;
+	const name = path.basename(String(c.req.query('name') || ''));
+	if (!LOG_NAME_RE.test(name)) return err(c, 400, '非法日志文件名');
+	const maxLen = Math.min(Number(c.req.query('maxLen')) || 4000, 20000);
+	try {
+		const content = (await fs.promises.readFile(path.join(scriptDir(loaded.id), 'logs', name), 'utf8')).trimEnd();
+		return c.json({ name, content: content.length > maxLen ? '…' + content.slice(-maxLen) : content });
+	} catch {
+		return err(c, 404, '日志不存在');
+	}
 });
 
 /* ===================== 启动失败判定（启动日志本就落盘在 <卡片>/logs/，失败时取尾部提示） ===================== */

@@ -34,32 +34,49 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 // 打包态 bundle 在 asar/electron/ 内 → ../web/dist，同一条相对链天然成立）
 const dist = process.env.AI_SCRIPTS_WEB_DIST || path.resolve(here, '../../web/dist');
 
-app.get('*', (c) => {
+// 请求路径零同步 IO（同 9-24 探测重构的原则）：readdir/stat/readFile 全异步。
+// 缓存策略：vite 产物 assets/* 文件名带内容 hash → immutable 一年；index.html 等入口
+// 必须每次回源校验（版本更新靠它），给 no-cache。
+app.get('*', async (c) => {
 	const rel = c.req.path === '/' ? 'index.html' : c.req.path.slice(1);
 	const abs = path.join(dist, rel);
-	if (fs.existsSync(abs) && fs.statSync(abs).isFile()) {
-		return c.body(fs.readFileSync(abs), 200, {
-			'Content-Type': MIME[path.extname(abs).toLowerCase()] || 'application/octet-stream',
-		});
+	try {
+		const st = await fs.promises.stat(abs);
+		if (st.isFile()) {
+			const body = await fs.promises.readFile(abs);
+			const immutable = rel.startsWith('assets/');
+			return c.body(body, 200, {
+				'Content-Type': MIME[path.extname(abs).toLowerCase()] || 'application/octet-stream',
+				'Cache-Control': immutable ? 'public, max-age=31536000, immutable' : 'no-cache',
+			});
+		}
+	} catch {
+		/* 落到 SPA fallback */
 	}
 	const idx = path.join(dist, 'index.html'); // SPA fallback
-	if (fs.existsSync(idx)) return c.body(fs.readFileSync(idx), 200, { 'Content-Type': MIME['.html'] });
-	return c.text('not found', 404);
+	try {
+		const body = await fs.promises.readFile(idx);
+		return c.body(body, 200, { 'Content-Type': MIME['.html'], 'Cache-Control': 'no-cache' });
+	} catch {
+		return c.text('not found', 404);
+	}
 });
 
 const port = 8792;
+// 只绑回环：文件读写 API（/:id/file）能触达卡片目录（含密钥文件），不暴露局域网
+const HOST = '127.0.0.1';
 
 /** Electron 主进程内嵌启动入口（AI_SCRIPTS_EMBEDDED=1 时由 electron/main.mjs 调用）：
  *  监听错误走 reject（端口占用等），resolve 于就绪后，主进程再开窗口。 */
 export function startServer(): Promise<number> {
 	return new Promise((resolve, reject) => {
-		const server = serve({ fetch: app.fetch, port }, (info) => resolve(info.port));
+		const server = serve({ fetch: app.fetch, hostname: HOST, port }, (info) => resolve(info.port));
 		server.on('error', reject);
 	});
 }
 
 if (process.env.AI_SCRIPTS_EMBEDDED !== '1') {
-	serve({ fetch: app.fetch, port }, ({ port }) => {
-		console.log(`ai-scripts server: http://localhost:${port}  (api at /api/scripts)`);
+	serve({ fetch: app.fetch, hostname: HOST, port }, ({ port, address }) => {
+		console.log(`ai-scripts server: http://${address}:${port}  (api at /api/scripts)`);
 	});
 }

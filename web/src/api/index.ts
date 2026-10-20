@@ -1,6 +1,6 @@
 // API client — scripts routes only. Everything runs locally; no host targeting.
 
-import type { BrowseResult, ScriptCard, ScriptCreateInput } from '../types/script';
+import type { BrowseResult, LogFileInfo, LogTail, ScriptCard, ScriptCreateInput } from '../types/script';
 
 async function getJson<T>(url: string): Promise<T> {
 	const res = await fetch(url);
@@ -53,4 +53,8 @@ export const api = {
 		putJson<{ ok: true }>(`/api/scripts/${encodeURIComponent(id)}/file?path=${encodeURIComponent(path)}`, { content }),
 	browse: (path?: string) =>
 		getJson<BrowseResult>(`/api/scripts/browse?path=${encodeURIComponent(path ?? '')}`),
+	listLogs: (id: string) =>
+		getJson<LogFileInfo[]>(`/api/scripts/${encodeURIComponent(id)}/logs`),
+	readLogTail: (id: string, name: string, maxLen = 4000) =>
+		getJson<LogTail>(`/api/scripts/${encodeURIComponent(id)}/logs/tail?name=${encodeURIComponent(name)}&maxLen=${maxLen}`),
 };

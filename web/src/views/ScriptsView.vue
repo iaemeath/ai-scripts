@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { ArrowLeft, FolderOpened, Plus, Refresh } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { api } from '../api';
-import type { BrowseResult, ScriptCard } from '../types/script';
+import type { BrowseResult, LogFileInfo, ScriptCard } from '../types/script';
 
 const route = useRoute();
 const router = useRouter();
@@ -74,8 +74,11 @@ function fmtDur(ms: number) {
 	return `${sec}s`;
 }
 
+/** 正在启动的卡片 id（check 型卡片就绪观察最长 6s，按钮 loading 防重复点击）。 */
+const startingId = ref('');
+
 async function start(card: ScriptCard) {
-	ElMessage({ message: '启动中…', type: 'info', duration: 1300 });
+	startingId.value = card.id;
 	try {
 		const r = await api.startScript(card.id);
 		if (r.ok) {
@@ -98,6 +101,8 @@ async function start(card: ScriptCard) {
 		}
 	} catch (e) {
 		ElMessage.error((e as Error).message);
+	} finally {
+		startingId.value = '';
 	}
 	await loadCards();
 }
@@ -119,6 +124,74 @@ async function stop(card: ScriptCard) {
 		ElMessage.error((e as Error).message);
 	}
 	await loadCards();
+}
+
+/** 删除卡片：整个卡片目录（含日志）移除；运行中由后端 409 拒绝，前端先行确认。 */
+async function removeCard(card: ScriptCard) {
+	try {
+		await ElMessageBox.confirm(
+			`将删除卡片「${card.name}」的整个目录（含 script.json 与日志），不可恢复。`,
+			'删除卡片',
+			{ confirmButtonText: '删除', cancelButtonText: '取消', type: 'warning' },
+		);
+	} catch {
+		return; // 用户取消
+	}
+	try {
+		await api.deleteScript(card.id);
+		ElMessage.success(`已删除：${card.name}`);
+	} catch (e) {
+		ElMessage.error((e as Error).message);
+	}
+	await loadCards();
+}
+
+/* ===================== 卡片日志：列表 + 尾部查看 ===================== */
+const logsDlg = ref(false);
+const logsLoading = ref(false);
+const logsList = ref<LogFileInfo[]>([]);
+const logsCardId = ref('');
+const logsCardName = ref('');
+/** 当前正在查看的日志（选中即拉尾部，进入弹窗默认自动打开最新一份）。 */
+const logView = ref<{ name: string; content: string } | null>(null);
+const logLoading = ref(false);
+
+async function openLogs(card: ScriptCard) {
+	logsCardId.value = card.id;
+	logsCardName.value = card.name;
+	logsDlg.value = true;
+	logView.value = null;
+	await reloadLogs(card.id, true);
+}
+
+async function reloadLogs(id: string, autoOpenLatest = false) {
+	logsLoading.value = true;
+	try {
+		logsList.value = await api.listLogs(id);
+		if (autoOpenLatest && logsList.value.length) await viewLog(id, logsList.value[0].name);
+	} catch (e) {
+		ElMessage.error((e as Error).message);
+	} finally {
+		logsLoading.value = false;
+	}
+}
+
+async function viewLog(id: string, name: string) {
+	logLoading.value = true;
+	try {
+		logView.value = await api.readLogTail(id, name);
+	} catch (e) {
+		ElMessage.error((e as Error).message);
+	} finally {
+		logLoading.value = false;
+	}
+}
+
+function fmtTime(ms: number) {
+	if (!ms) return '—';
+	const d = new Date(ms);
+	const p = (n: number) => String(n).padStart(2, '0');
+	return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
 /* ===================== 新建 / 编辑（共用表单）：名字 / 描述 / 启动命令 / 打开命令 ===================== */
@@ -290,10 +363,12 @@ const rootHint = computed(() => '内置=仓库 scripts/（随代码迁移）· �
               </el-tag>
             </div>
             <div class="card-ops">
-              <el-button size="small" type="success" plain :disabled="s.status.status === 'running'" @click="start(s)">启动</el-button>
+              <el-button size="small" type="success" plain :loading="startingId === s.id" :disabled="s.status.status === 'running'" @click="start(s)">启动</el-button>
               <el-button v-if="s.open && s.status.status === 'running'" size="small" type="primary" plain @click="openCard(s)">打开</el-button>
               <el-button size="small" type="danger" plain :disabled="s.status.status !== 'running'" @click="stop(s)">关闭</el-button>
+              <el-button size="small" text @click="openLogs(s)">日志</el-button>
               <el-button size="small" text @click="router.push(`/scripts/${encodeURIComponent(s.id)}/edit`)">编辑</el-button>
+              <el-button size="small" text type="danger" :disabled="s.status.status === 'running'" @click="removeCard(s)">删除</el-button>
             </div>
           </el-card>
         </div>
@@ -354,6 +429,33 @@ const rootHint = computed(() => '内置=仓库 scripts/（随代码迁移）· �
             <span class="browse-icon">⚙️</span><span>{{ f }}</span>
           </div>
           <div v-if="!browse.dirs.length && !browse.files.length" class="browse-empty">（空目录）</div>
+        </div>
+      </div>
+    </el-dialog>
+
+    <!-- 卡片日志：列表（新→旧）+ 尾部查看 -->
+    <el-dialog v-model="logsDlg" :title="`日志 — ${logsCardName}`" width="720px" top="6vh">
+      <div v-loading="logsLoading" class="logs-body">
+        <div class="logs-toolbar">
+          <span class="logs-hint">保留最近 10 份，点击查看尾部（约 4KB）</span>
+          <el-button size="small" :icon="Refresh" :disabled="!logsCardId" @click="reloadLogs(logsCardId)">刷新</el-button>
+        </div>
+        <div class="logs-list">
+          <div
+            v-for="l in logsList"
+            :key="l.name"
+            class="logs-row"
+            :class="{ active: logView?.name === l.name }"
+            @click="viewLog(logsCardId, l.name)"
+          >
+            <span class="logs-name mono">{{ l.name }}</span>
+            <span class="logs-meta">{{ fmtTime(l.mtime) }} · {{ l.sizeKB }} KB</span>
+          </div>
+          <div v-if="!logsLoading && !logsList.length" class="browse-empty">（无日志——卡片从未启动过）</div>
+        </div>
+        <div v-if="logView" v-loading="logLoading" class="log-view">
+          <div class="log-view-head mono">{{ logView.name }}</div>
+          <pre class="log-content mono">{{ logView.content }}</pre>
         </div>
       </div>
     </el-dialog>
@@ -533,5 +635,72 @@ const rootHint = computed(() => '内置=仓库 scripts/（随代码迁移）· �
 }
 .browse-icon {
   flex: 0 0 auto;
+}
+
+/* ---- 卡片日志弹窗 ---- */
+.logs-body {
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.logs-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.logs-hint {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+.logs-list {
+  max-height: 22vh;
+  overflow: auto;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 4px;
+}
+.logs-row {
+  padding: 6px 10px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  font-size: 13px;
+}
+.logs-row:hover {
+  background: var(--el-fill-color-light);
+}
+.logs-row.active {
+  background: var(--el-color-primary-light-9);
+}
+.logs-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.logs-meta {
+  flex: 0 0 auto;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+.log-view-head {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+.log-content {
+  margin: 0;
+  padding: 10px;
+  background: var(--el-fill-color-dark);
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 1.6;
+  max-height: 42vh;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 </style>

@@ -32,6 +32,7 @@ win:
   target:
     - target: portable
       arch: [x64]
+  icon: build/icon.ico
   # 签名走构建后手动步骤（app:dist 之后执行 sign-exe.ps1）：
   # electron-builder 的 signtool 联网下载在本机不可用；Set-AuthenticodeSignature + 自签证书
   # （Cert:\CurrentUser\My，CN=ai-scripts-dev，已导入本机 Root/TrustedPeople）等效且离线
