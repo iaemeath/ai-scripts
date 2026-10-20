@@ -30,9 +30,11 @@ const MIME: Record<string, string> = {
 };
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-// web/dist：Electron dev 态由 main.mjs 注入；缺省按相对位置解析（server/src → 仓库根；
-// 打包态 bundle 在 asar/electron/ 内 → ../web/dist，同一条相对链天然成立）
-const dist = process.env.AI_SCRIPTS_WEB_DIST || path.resolve(here, '../../web/dist');
+// web/dist：Electron dev 态由 main.cjs 注入；缺省按相对位置解析——dev（server/src → 仓库根，
+// 2 级）与打包（bundle 在 electron/ 内 → app 根，1 级）层级不同，两个候选取存在者
+const dist = process.env.AI_SCRIPTS_WEB_DIST
+	|| [path.resolve(here, '../../web/dist'), path.resolve(here, '../web/dist')].find((p) => fs.existsSync(path.join(p, 'index.html')))
+	|| path.resolve(here, '../web/dist');
 
 // 请求路径零同步 IO（同 9-24 探测重构的原则）：readdir/stat/readFile 全异步。
 // 缓存策略：vite 产物 assets/* 文件名带内容 hash → immutable 一年；index.html 等入口

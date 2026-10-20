@@ -40,12 +40,14 @@ export interface ScriptManifest {
 
 /** 卡片根：仓库内置 scripts/（随代码迁移）。 */
 export function scriptsRoot(): string {
-	// Electron 形态由 main.mjs 注入（打包=userData/scripts 播种副本，dev=仓库 scripts/）；
-	// 缺省按源码相对位置解析，与安装位置无关
+	// Electron 形态由 main.cjs 注入（打包=userData/scripts 播种副本，dev=仓库 scripts/）；
+	// 缺省按源码相对位置解析——dev（server/src，2 级）与打包（electron/，1 级）层级不同，
+	// 两个候选取存在者（锚点 = 仓库根 / app 根都必有的 package.json），与 index.ts 的 dist 解析同款
 	const injected = process.env.AI_SCRIPTS_SCRIPTS_ROOT;
 	if (injected) return injected;
-	// server/src（或打包后 asar/electron/）→ 相对解析仓库根，卡片就在 <仓>/scripts
-	return path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../scripts');
+	const here = path.dirname(fileURLToPath(import.meta.url));
+	return [path.resolve(here, '../../scripts'), path.resolve(here, '../scripts')].find((p) => fs.existsSync(path.join(p, '..', 'package.json')))
+		?? path.resolve(here, '../scripts');
 }
 
 /** 外置卡片根：~/.ai-scripts（用户自装工具的登记卡片，与仓库代码分离）。 */
