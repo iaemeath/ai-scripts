@@ -5,3 +5,9 @@ dist-exe/
 .smoke/
 scripts/*/.run.json
 scripts/*/quota_*.json
+
+# 构建产物与运行时（含密钥，严禁入库）
+release/
+.build-tmp/
+logs/
+.playwright-mcp/
