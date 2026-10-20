@@ -3,16 +3,25 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "main": "electron/main.cjs",
+  "description": "脚本卡片控制台",
+  "author": "cly",
   "scripts": {
     "dev:server": "npm -w server run dev",
     "dev:web": "npm -w web run dev",
     "dev": "concurrently -k -n server,web -c blue,green \"npm:dev:server\" \"npm:dev:web\"",
     "build": "npm -w web run build",
-    "start": "npm -w server run start",
+    "app:bundle": "esbuild server/src/index.ts --bundle --platform=node --format=esm --outfile=electron/server.mjs",
+    "app:build": "npm run build && npm run app:bundle",
+    "app": "npm run app:build && electron electron/main.mjs",
+    "app:dist": "npm run app:build && electron-builder --win --config electron-builder.yml",
     "typecheck": "npm -w server exec tsc && npm -w web exec vue-tsc"
   },
   "devDependencies": {
-    "concurrently": "^9.1.0"
+    "concurrently": "^9.1.0",
+    "electron": "43.4.1",
+    "electron-builder": "26.15.3",
+    "esbuild": "0.28.2"
   },
   "workspaces": [
     "server",

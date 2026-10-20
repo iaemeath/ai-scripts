@@ -11,6 +11,7 @@ import { scripts } from './routes.js';
 const app = new Hono();
 
 app.get('/api/health', (c) => c.json({ ok: true }));
+
 app.route('/api/scripts', scripts);
 
 // Static frontend (production, `npm run build` → web/dist). No SEA assets yet —
@@ -29,7 +30,9 @@ const MIME: Record<string, string> = {
 };
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const dist = path.resolve(here, '../../web/dist');
+// web/dist：Electron dev 态由 main.mjs 注入；缺省按相对位置解析（server/src → 仓库根；
+// 打包态 bundle 在 asar/electron/ 内 → ../web/dist，同一条相对链天然成立）
+const dist = process.env.AI_SCRIPTS_WEB_DIST || path.resolve(here, '../../web/dist');
 
 app.get('*', (c) => {
 	const rel = c.req.path === '/' ? 'index.html' : c.req.path.slice(1);
@@ -45,6 +48,18 @@ app.get('*', (c) => {
 });
 
 const port = 8792;
-serve({ fetch: app.fetch, port }, ({ port }) => {
-	console.log(`ai-scripts server: http://localhost:${port}  (api at /api/scripts)`);
-});
+
+/** Electron 主进程内嵌启动入口（AI_SCRIPTS_EMBEDDED=1 时由 electron/main.mjs 调用）：
+ *  监听错误走 reject（端口占用等），resolve 于就绪后，主进程再开窗口。 */
+export function startServer(): Promise<number> {
+	return new Promise((resolve, reject) => {
+		const server = serve({ fetch: app.fetch, port }, (info) => resolve(info.port));
+		server.on('error', reject);
+	});
+}
+
+if (process.env.AI_SCRIPTS_EMBEDDED !== '1') {
+	serve({ fetch: app.fetch, port }, ({ port }) => {
+		console.log(`ai-scripts server: http://localhost:${port}  (api at /api/scripts)`);
+	});
+}

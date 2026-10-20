@@ -1,8 +1,0 @@
-{
-	"id": "ux-refactor",
-	"name": "ux-refactor",
-	"desc": "UX设计",
-	"start": "\"C:\\Program Files\\nodejs\\node.exe\" \"D:\\cly\\ai-scripts\\scripts\\ux-refactor\\node_modules\\vite\\bin\\vite.js\" --strictPort",
-	"order": 98,
-	"open": "explorer http://localhost:3400"
-}

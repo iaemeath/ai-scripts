@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { ArrowLeft, FolderOpened, Plus, Refresh, SwitchButton } from '@element-plus/icons-vue';
+import { ArrowLeft, FolderOpened, Plus, Refresh } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { api } from '../api';
 import type { BrowseResult, ScriptCard } from '../types/script';
@@ -33,7 +33,20 @@ async function loadCards() {
 	}
 }
 
-const runningCount = computed(() => cards.value.filter((c) => c.status.status === 'running').length);
+/* ===================== 分节：内置在上，外部在下 ===================== */
+/** 内置节（script.json 里 builtin:true），永远排第一；其余全归「外部」节。 */
+const sourceSections = computed(() => {
+	const builtin = cards.value.filter((c) => c.builtin);
+	const external = cards.value.filter((c) => !c.builtin);
+	return [
+		{ name: '内置', cards: builtin },
+		{ name: '外部', cards: external },
+	].filter((s) => s.cards.length > 0);
+});
+/** 分节头显示运行计数：2/3 运行中。 */
+function sectionRunCount(cards: ScriptCard[]) {
+	return `${cards.filter((c) => c.status.status === 'running').length}/${cards.length}`;
+}
 
 function statusTagType(s: ScriptCard['status']) {
 	return s.status === 'running' ? 'success' : 'info';
@@ -98,30 +111,6 @@ async function openCard(card: ScriptCard) {
 	}
 }
 
-/* ---- 全部收起：性能吃紧时一键关掉所有运行中的卡 ---- */
-async function stopAll() {
-	const running = cards.value.filter((c) => c.status.status === 'running');
-	if (!running.length) return;
-	try {
-		await ElMessageBox.confirm(
-			`将关闭 ${running.length} 个运行中的卡片：${running.map((c) => c.name).join('、')}`,
-			'全部收起',
-			{ confirmButtonText: '全部关闭', cancelButtonText: '取消', type: 'warning' },
-		);
-	} catch {
-		return;
-	}
-	for (const c of running) {
-		try {
-			await api.stopScript(c.id);
-		} catch {
-			/* 单个失败不阻断其余 */
-		}
-	}
-	ElMessage.success(`已收起 ${running.length} 个卡片`);
-	await loadCards();
-}
-
 async function stop(card: ScriptCard) {
 	try {
 		await api.stopScript(card.id);
@@ -179,7 +168,7 @@ async function save() {
 			json['desc'] = form.desc.trim() || undefined;
 			json['start'] = form.start.trim();
 			json['open'] = form.open.trim() || undefined;
-			await api.writeCardFile(editId.value, 'script.json', JSON.stringify(json, null, '\t'));
+			await api.writeCardFile(editId.value, 'script.json', JSON.stringify(json, null, '	'));
 			ElMessage.success('已保存');
 		} else {
 			await api.createScript({
@@ -262,7 +251,7 @@ onUnmounted(() => {
 	stopPolling();
 });
 
-const rootHint = computed(() => '工具根目录 scripts/（随工具内置，一卡片一目录，放入即注册）');
+const rootHint = computed(() => '内置=仓库 scripts/（随代码迁移）· 外置=~/.ai-scripts（自装工具）· 一卡片一目录，放入即注册');
 </script>
 
 <template>
@@ -272,9 +261,6 @@ const rootHint = computed(() => '工具根目录 scripts/（随工具内置，�
       <span class="hint">{{ rootHint }}</span>
       <div class="spacer" />
       <el-button :icon="Refresh" @click="loadCards">刷新</el-button>
-      <el-button v-if="runningCount" type="warning" plain :icon="SwitchButton" @click="stopAll">
-        全部收起 ({{ runningCount }})
-      </el-button>
       <el-button type="primary" :icon="Plus" @click="router.push('/scripts/new')">新建</el-button>
     </div>
 
@@ -282,28 +268,36 @@ const rootHint = computed(() => '工具根目录 scripts/（随工具内置，�
       <div class="empty-sub">点击「新建」登记工具；把含 script.json 的目录放入工具根目录，5 秒内自动注册</div>
     </el-empty>
 
-    <div v-else class="card-grid">
-      <el-card v-for="s in cards" :key="s.id" class="script-card" shadow="hover">
-        <div class="card-head">
-          <span class="card-name">{{ s.name }}</span>
-          <el-tooltip :content="statusTip(s)" :disabled="!statusTip(s)" placement="top">
-            <el-tag size="small" :type="statusTagType(s.status)" disable-transitions>{{ statusLabel(s.status) }}</el-tag>
-          </el-tooltip>
+    <div v-else class="sections">
+      <section v-for="sec in sourceSections" :key="sec.name" class="group-section">
+        <div class="group-head">
+          <span class="group-name">{{ sec.name }}</span>
+          <span class="group-count">{{ sec.cards.length }} 张 · 运行 {{ sectionRunCount(sec.cards) }}</span>
         </div>
-        <div class="card-desc">{{ s.desc || '（无描述）' }}</div>
-        <div class="card-cmd mono">{{ s.start }}</div>
-        <div class="card-meta">
-          <el-tag v-if="s.status.status === 'running' && s.memMB" size="small" type="success" effect="plain" disable-transitions>
-            {{ s.memMB }} MB
-          </el-tag>
+        <div class="card-grid">
+          <el-card v-for="s in sec.cards" :key="s.id" class="script-card" shadow="hover">
+            <div class="card-head">
+              <span class="card-name">{{ s.name }}</span>
+              <el-tooltip :content="statusTip(s)" :disabled="!statusTip(s)" placement="top">
+                <el-tag size="small" :type="statusTagType(s.status)" disable-transitions>{{ statusLabel(s.status) }}</el-tag>
+              </el-tooltip>
+            </div>
+            <div class="card-desc">{{ s.desc || '（无描述）' }}</div>
+            <div class="card-cmd mono">{{ s.start }}</div>
+            <div class="card-meta">
+              <el-tag v-if="s.status.status === 'running' && s.memMB" size="small" type="success" effect="plain" disable-transitions>
+                {{ s.memMB }} MB
+              </el-tag>
+            </div>
+            <div class="card-ops">
+              <el-button size="small" type="success" plain :disabled="s.status.status === 'running'" @click="start(s)">启动</el-button>
+              <el-button v-if="s.open && s.status.status === 'running'" size="small" type="primary" plain @click="openCard(s)">打开</el-button>
+              <el-button size="small" type="danger" plain :disabled="s.status.status !== 'running'" @click="stop(s)">关闭</el-button>
+              <el-button size="small" text @click="router.push(`/scripts/${encodeURIComponent(s.id)}/edit`)">编辑</el-button>
+            </div>
+          </el-card>
         </div>
-        <div class="card-ops">
-          <el-button size="small" type="success" plain :disabled="s.status.status === 'running'" @click="start(s)">启动</el-button>
-          <el-button v-if="s.open && s.status.status === 'running'" size="small" type="primary" plain @click="openCard(s)">打开</el-button>
-          <el-button size="small" type="danger" plain :disabled="s.status.status !== 'running'" @click="stop(s)">关闭</el-button>
-          <el-button size="small" text @click="router.push(`/scripts/${encodeURIComponent(s.id)}/edit`)">编辑</el-button>
-        </div>
-      </el-card>
+      </section>
     </div>
   </div>
 
@@ -403,6 +397,26 @@ const rootHint = computed(() => '工具根目录 scripts/（随工具内置，�
 }
 
 /* ---- 卡片 ---- */
+.sections {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.group-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.group-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+.group-count {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
 .card-grid {
   display: grid;
   gap: 12px;

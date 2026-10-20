@@ -7,9 +7,9 @@ import { Hono } from 'hono';
 import fs from 'node:fs';
 import path from 'node:path';
 import {
-	listScriptIds, readManifest, safeJoin, scriptDir, SCRIPT_ID_RE, type ScriptManifest,
+	isBuiltinCard, listScriptIds, readManifest, safeJoin, scriptDir, SCRIPT_ID_RE, type ScriptManifest,
 } from './store.js';
-import { memOfPids, spawnDetached, startProc, statusOf, stopProc } from './procman.js';
+import { pidAlive, probeUrl, refreshSoon, spawnDetached, startProc, statusOf, stopProc, warmup } from './procman.js';
 
 export const scripts = new Hono();
 
@@ -21,6 +21,8 @@ interface ScriptCard {
 	start: string;
 	/** 打开动作命令行（可选）：出现「打开」按钮，如 explorer http://localhost:8899/xxx.html。 */
 	open?: string;
+	/** 是否内置（按卡片所在目录判定：仓库 scripts/=内置，~/.ai-scripts/=外置）：仅用于列表分节展示。 */
+	builtin: boolean;
 	order?: number;
 	status: ReturnType<typeof statusOf>;
 	/** 运行中进程的内存占用（MB）；列表端点批量填充。 */
@@ -28,14 +30,17 @@ interface ScriptCard {
 }
 
 function toCard(id: string, m: ScriptManifest): ScriptCard {
+	const status = statusOf(id); // 读缓存（后台 2.5s 刷新），请求路径零探测
 	return {
 		id,
 		name: m.name,
 		desc: m.desc,
 		start: m.start || '',
 		open: m.open || undefined,
+		builtin: isBuiltinCard(id),
 		order: m.order,
-		status: statusOf(id, m.check, m.process),
+		status,
+		memMB: status.memMB,
 	};
 }
 
@@ -43,8 +48,9 @@ const err = (c: any, code: number, msg: string) => c.json({ error: msg }, code a
 
 /* ===================== 卡片列表 ===================== */
 
-/** GET /api/scripts */
-scripts.get('/', (c) => {
+/** GET /api/scripts — 读状态缓存，毫秒级返回；探测在后台循环里做（procman）。 */
+scripts.get('/', async (c) => {
+	await warmup(); // 仅冷启动首次列表会等一轮预热（单飞有界，全部异步不阻塞其它请求）
 	const cards = listScriptIds().map((id) => {
 		let m: ScriptManifest;
 		try {
@@ -55,12 +61,6 @@ scripts.get('/', (c) => {
 		return toCard(id, m);
 	});
 	cards.sort((a, b) => (a.order ?? 99) - (b.order ?? 99) || a.id.localeCompare(b.id));
-	// 运行中的卡片批量查一次内存占用（单次 tasklist 快照，锦上添花，失败静默）
-	const mem = memOfPids(cards.filter((x) => x.status.status === 'running').map((x) => x.status.pid));
-	for (const x of cards) {
-		const mb = x.status.pid ? mem.get(x.status.pid) : undefined;
-		if (mb) x.memMB = mb;
-	}
 	return c.json(cards);
 });
 
@@ -109,7 +109,7 @@ scripts.get('/browse', (c) => {
 
 /* ===================== 新建 ===================== */
 
-/** POST /api/scripts — 登记。body { name, desc?, start, open?, order? } — 均为命令行。 */
+/** POST /api/scripts — 登记（新卡片落外置根 ~/.ai-scripts）。body { name, desc?, start, open?, order? }。 */
 scripts.post('/', async (c) => {
 	const b = await c.req.json<{ name: string; desc?: string; start?: string; open?: string; order?: number }>();
 	if (!String(b.name || '').trim()) return err(c, 400, '显示名不能为空');
@@ -151,11 +151,14 @@ function loadOr404(c: any): { id: string; manifest: ScriptManifest } | Response 
 }
 
 /** DELETE /api/scripts/:id — 删除整个卡片目录（运行中拒绝）。 */
-scripts.delete('/:id', (c) => {
+scripts.delete('/:id', async (c) => {
 	const loaded = loadOr404(c);
 	if (loaded instanceof Response) return loaded;
-	const { id } = loaded;
-	if (statusOf(id, loaded.manifest.check, loaded.manifest.process).status === 'running') {
+	const { id, manifest } = loaded;
+	// 缓存判运行 + check 地址新鲜探测兜底（防外部启动的实例被误删）
+	const running = statusOf(id).status === 'running'
+		|| (manifest.check ? await probeUrl(manifest.check, 1500) : false);
+	if (running) {
 		return err(c, 409, '正在运行，请先关闭');
 	}
 	fs.rmSync(scriptDir(id), { recursive: true, force: true });
@@ -164,27 +167,47 @@ scripts.delete('/:id', (c) => {
 
 /* ===================== 启动 / 关闭 ===================== */
 
-/** POST /api/scripts/:id/start — 执行登记的启动命令行；观察 1.5s 后确认进程仍存活（或 check
- *  探测可达）才算成功，秒退判启动失败并把日志尾部带回提示。transient 卡片（explorer 打开页
- *  面类，瞬退属预期）跳过判定直接返回。 */
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** POST /api/scripts/:id/start — 执行登记的启动命令行；就绪观察：有 check 的轮询 URL
+ *  （最多 6s，就绪即返回），无 check 的观察进程存活（~800ms）；秒退/超时判失败并带日志尾部。
+ *  transient 卡片（explorer 打开页面类，瞬退属预期）跳过判定直接返回。
+ *  另：启动前对 check 地址做端口占用预检——已可达 = 旧实例还在（含非本控制台启动的），
+ *  直接 409 给明确提示，避免起一个秒挂的重复实例。 */
 scripts.post('/:id/start', async (c) => {
 	const loaded = loadOr404(c);
 	if (loaded instanceof Response) return loaded;
 	const { id, manifest } = loaded;
 	if (!manifest.start) return err(c, 400, '该卡片未配置启动命令');
+	if (statusOf(id).status === 'running') return err(c, 409, '已在运行中，勿重复启动');
+	if (manifest.check && await probeUrl(manifest.check, 1200)) {
+		return err(c, 409, '服务端口已可达（疑似旧实例仍在运行），请先「关闭」后再启动');
+	}
 	try {
 		startProc(id, manifest.start, scriptDir(id));
 	} catch (e) {
 		return err(c, 409, (e as Error).message);
 	}
-	if (manifest.transient) return c.json({ ok: true, status: statusOf(id, manifest.check) });
-	await new Promise((r) => setTimeout(r, 1500));
-	const st = statusOf(id, manifest.check);
-	if (st.status === 'running') return c.json({ ok: true, status: st });
+	if (manifest.transient) return c.json({ ok: true, status: statusOf(id) });
+	const pid = statusOf(id).pid;
+	const hasCheck = !!manifest.check;
+	const deadline = Date.now() + (hasCheck ? 6000 : 1500);
+	while (Date.now() < deadline) {
+		await sleep(hasCheck ? 400 : 750);
+		if (hasCheck && manifest.check && await probeUrl(manifest.check, 1500)) {
+			refreshSoon();
+			return c.json({ ok: true, status: statusOf(id) });
+		}
+		if (pid !== null && !pidAlive(pid)) break; // 进程没了，跳出走失败分支
+		if (!hasCheck && pidAlive(pid)) {
+			refreshSoon();
+			return c.json({ ok: true, status: statusOf(id) });
+		}
+	}
 	return c.json({
 		ok: false,
-		reason: st.status === 'exited' ? '进程启动后立即退出' : '启动后未进入运行状态',
-		logTail: latestLogTail(id),
+		reason: pid !== null && !pidAlive(pid) ? '进程启动后立即退出' : '启动后未进入运行状态',
+		logTail: await latestLogTail(id),
 	});
 });
 
@@ -201,23 +224,23 @@ scripts.post('/:id/open', (c) => {
 	}
 });
 
-/** POST /api/scripts/:id/stop — 优雅停止（登记了 stop 命令）或兜底强杀进程树。 */
-scripts.post('/:id/stop', (c) => {
+/** POST /api/scripts/:id/stop — 优雅停止（登记了 stop 命令）或兜底强杀进程树（异步 taskkill）。 */
+scripts.post('/:id/stop', async (c) => {
 	const loaded = loadOr404(c);
 	if (loaded instanceof Response) return loaded;
-	return c.json({ ok: true, killed: stopProc(loaded.id, loaded.manifest.stop, loaded.manifest.process) });
+	return c.json({ ok: true, killed: await stopProc(loaded.id, loaded.manifest.stop, loaded.manifest.process) });
 });
 
 /* ===================== 启动失败判定（启动日志本就落盘在 <卡片>/logs/，失败时取尾部提示） ===================== */
 
-/** 卡片最新一份启动日志的尾部（失败提示用）。 */
-function latestLogTail(id: string, maxLen = 1200): string {
+/** 卡片最新一份启动日志的尾部（失败提示用；异步读取不阻塞事件循环）。 */
+async function latestLogTail(id: string, maxLen = 1200): Promise<string> {
 	try {
 		const dir = path.join(scriptDir(id), 'logs');
-		const files = fs.readdirSync(dir).filter((n) => n.endsWith('.log')).sort();
+		const files = (await fs.promises.readdir(dir)).filter((n) => n.endsWith('.log')).sort();
 		const latest = files[files.length - 1];
 		if (!latest) return '（无日志文件）';
-		let content = fs.readFileSync(path.join(dir, latest), 'utf8').trimEnd();
+		let content = (await fs.promises.readFile(path.join(dir, latest), 'utf8')).trimEnd();
 		if (content.length > maxLen) content = '…' + content.slice(-maxLen);
 		return content;
 	} catch {
