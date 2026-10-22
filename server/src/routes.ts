@@ -7,7 +7,7 @@ import { Hono } from 'hono';
 import fs from 'node:fs';
 import path from 'node:path';
 import {
-	isBuiltinCard, listScriptIds, readManifest, safeJoin, scriptDir, SCRIPT_ID_RE, type ScriptManifest,
+	listScriptIds, readManifest, safeJoin, scriptDir, SCRIPT_ID_RE, type ScriptManifest,
 } from './store.js';
 import { pidAlive, probeUrl, refreshSoon, spawnDetached, startProc, statusOf, stopProc, warmup } from './procman.js';
 
@@ -21,9 +21,6 @@ interface ScriptCard {
 	start: string;
 	/** 打开动作命令行（可选）：出现「打开」按钮，如 explorer http://localhost:8899/xxx.html。 */
 	open?: string;
-	/** 是否内置（按卡片所在目录判定：仓库 scripts/=内置，~/.ai-scripts/=外置）：仅用于列表分节展示。 */
-	builtin: boolean;
-	order?: number;
 	status: ReturnType<typeof statusOf>;
 	/** 运行中进程的内存占用（MB）；列表端点批量填充。 */
 	memMB?: number;
@@ -37,8 +34,6 @@ function toCard(id: string, m: ScriptManifest): ScriptCard {
 		desc: m.desc,
 		start: m.start || '',
 		open: m.open || undefined,
-		builtin: isBuiltinCard(id),
-		order: m.order,
 		status,
 		memMB: status.memMB,
 	};
@@ -60,7 +55,7 @@ scripts.get('/', async (c) => {
 		}
 		return toCard(id, m);
 	});
-	cards.sort((a, b) => (a.order ?? 99) - (b.order ?? 99) || a.id.localeCompare(b.id));
+	cards.sort((a, b) => a.id.localeCompare(b.id));
 	return c.json(cards);
 });
 

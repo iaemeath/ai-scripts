@@ -1,9 +1,0 @@
-{
-	"id": "time-tool",
-	"name": "时间工具",
-	"desc": "个人日程管理（周/日/月视图，拖选建日程，localStorage 存储，数据可导出/导入 JSON）",
-	"start": "explorer index.html",
-	"transient": true,
-	"builtin": true,
-	"order": 98
-}

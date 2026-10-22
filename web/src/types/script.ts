@@ -17,9 +17,6 @@ export interface ScriptCard {
 	start: string;
 	/** 打开动作命令行（可选）：出现「打开」按钮。 */
 	open?: string;
-	/** 是否内置（按卡片目录判定：仓库 scripts/=内置，~/.ai-scripts/=外置）：内置节排在列表上方。 */
-	builtin: boolean;
-	order?: number;
 	/** 该卡片唯一进程的实时状态。 */
 	status: ScriptProcState;
 	/** 运行中进程的内存占用（MB）。 */

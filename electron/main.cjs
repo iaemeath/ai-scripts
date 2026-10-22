@@ -9,17 +9,14 @@
 // 接管内置模块，无歧义。
 //
 // 路径注入（server bundle 读）：
-//   AI_SCRIPTS_SCRIPTS_ROOT — 内置卡片根：打包态指向 userData/scripts（resources 每次启动
-//                             便携解包到临时目录，写入会丢；首启按卡片增量播种过去，用户
-//                             改动持久）；dev 态指仓库 scripts/
-//   AI_SCRIPTS_WEB_DIST     — dev 态指仓库 web/dist（打包态 bundle 在 asar/electron/ 内，
-//                             相对解析 ../web/dist 天然正确，无需注入）
+//   AI_SCRIPTS_NODE_DIR — 捆绑卡片运行时目录（打包态 resources/node-runtime），procman
+//                         前插进卡片进程 PATH
+// 卡片根单一：~/.ai-scripts（2026-10-22 起废除内置卡片与播种；打包态老数据由
+// migrateOldSeed 一次性搬过去）
 
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-
-const here = __dirname;
 
 /* ---------- 启动轨迹（诊断用）：写到 ~/ai-scripts-boot.log，每阶段打点 ---------- */
 const TRACE = path.join(os.homedir(), 'ai-scripts-boot.log');
@@ -46,21 +43,29 @@ const { app, BrowserWindow, dialog, shell } = electron;
 app.disableHardwareAcceleration(); // 核显/驱动差异下 GPU 初始化崩溃的规避；表单类 UI 无损
 trace('T2 disableHardwareAcceleration set');
 
-/** 打包态播种内置卡片：resources/scripts → userData/scripts，按卡片目录增量
- *  （已存在的不动，保留用户修改与 logs/.run.json 等运行时产物；新卡片随更新补齐）。 */
-function seedBuiltinCards() {
-	const src = path.join(process.resourcesPath, 'scripts');
-	const dst = path.join(app.getPath('userData'), 'scripts');
-	if (!fs.existsSync(src)) return dst;
-	fs.mkdirSync(dst, { recursive: true });
-	for (const name of fs.readdirSync(src)) {
-		const from = path.join(src, name);
-		const to = path.join(dst, name);
-		if (!fs.existsSync(path.join(from, 'script.json'))) continue; // 只播种卡片目录
-		if (fs.existsSync(to)) continue;
-		fs.cpSync(from, to, { recursive: true });
+/** 一次性迁移（打包态老数据）：旧播种目录 userData/scripts 里尚存的卡片目录挪到
+ *  ~/.ai-scripts（同名已存在则跳过保留现状），剩余杂物改名让路。幂等：目录不存在即跳过。 */
+function migrateOldSeed() {
+	const old = path.join(app.getPath('userData'), 'scripts');
+	if (!fs.existsSync(old)) return;
+	const home = path.join(os.homedir(), '.ai-scripts');
+	fs.mkdirSync(home, { recursive: true });
+	let moved = 0;
+	for (const name of fs.readdirSync(old)) {
+		const from = path.join(old, name);
+		const to = path.join(home, name);
+		if (!fs.existsSync(path.join(from, 'script.json')) || fs.existsSync(to)) continue;
+		fs.rmSync(to, { recursive: true, force: true });
+		fs.renameSync(from, to);
+		moved++;
 	}
-	return dst;
+	const leftover = path.join(old + '.migrated-' + new Date().toISOString().slice(0, 10));
+	try {
+		fs.renameSync(old, leftover);
+	} catch {
+		/* 挪不走就留着，不影响启动 */
+	}
+	trace('T3.5 migrateOldSeed moved=' + moved + ' leftover->' + leftover);
 }
 
 function createWindow() {
@@ -109,15 +114,12 @@ if (!app.requestSingleInstanceLock()) {
 		trace('T4 app ready');
 		process.env.AI_SCRIPTS_EMBEDDED = '1';
 		if (app.isPackaged) {
-			process.env.AI_SCRIPTS_SCRIPTS_ROOT = seedBuiltinCards();
+			migrateOldSeed();
 			// 捆绑的卡片运行时：procman 把它前插进卡片进程 PATH（没装 Node 的机器也能跑卡片）
 			const nodeRuntime = path.join(process.resourcesPath, 'node-runtime');
 			if (fs.existsSync(path.join(nodeRuntime, 'node.exe'))) {
 				process.env.AI_SCRIPTS_NODE_DIR = nodeRuntime;
 			}
-		} else {
-			process.env.AI_SCRIPTS_SCRIPTS_ROOT = path.resolve(here, '../scripts');
-			process.env.AI_SCRIPTS_WEB_DIST = path.resolve(here, '../web/dist');
 		}
 		try {
 			const { startServer } = await import('./server.mjs');

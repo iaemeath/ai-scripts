@@ -33,20 +33,8 @@ async function loadCards() {
 	}
 }
 
-/* ===================== 分节：内置在上，外部在下 ===================== */
-/** 内置节（script.json 里 builtin:true），永远排第一；其余全归「外部」节。 */
-const sourceSections = computed(() => {
-	const builtin = cards.value.filter((c) => c.builtin);
-	const external = cards.value.filter((c) => !c.builtin);
-	return [
-		{ name: '内置', cards: builtin },
-		{ name: '外部', cards: external },
-	].filter((s) => s.cards.length > 0);
-});
-/** 分节头显示运行计数：2/3 运行中。 */
-function sectionRunCount(cards: ScriptCard[]) {
-	return `${cards.filter((c) => c.status.status === 'running').length}/${cards.length}`;
-}
+/* ===================== 运行计数（标题旁）：2/3 运行中 ===================== */
+const runCount = computed(() => `${cards.value.filter((c) => c.status.status === 'running').length}/${cards.value.length}`);
 
 function statusTagType(s: ScriptCard['status']) {
 	return s.status === 'running' ? 'success' : 'info';
@@ -324,7 +312,7 @@ onUnmounted(() => {
 	stopPolling();
 });
 
-const rootHint = computed(() => '内置=仓库 scripts/（随代码迁移）· 外置=~/.ai-scripts（自装工具）· 一卡片一目录，放入即注册');
+const rootHint = computed(() => '工具目录 ~/.ai-scripts · 一卡片一目录，放入即注册');
 </script>
 
 <template>
@@ -338,41 +326,39 @@ const rootHint = computed(() => '内置=仓库 scripts/（随代码迁移）· �
     </div>
 
     <el-empty v-if="!loading && cards.length === 0" description="还没有卡片">
-      <div class="empty-sub">点击「新建」登记工具；把含 script.json 的目录放入工具根目录，5 秒内自动注册</div>
+      <div class="empty-sub">点击「新建」登记工具；把含 script.json 的目录放入 ~/.ai-scripts，5 秒内自动注册</div>
     </el-empty>
 
     <div v-else class="sections">
-      <section v-for="sec in sourceSections" :key="sec.name" class="group-section">
-        <div class="group-head">
-          <span class="group-name">{{ sec.name }}</span>
-          <span class="group-count">{{ sec.cards.length }} 张 · 运行 {{ sectionRunCount(sec.cards) }}</span>
-        </div>
-        <div class="card-grid">
-          <el-card v-for="s in sec.cards" :key="s.id" class="script-card" shadow="hover">
-            <div class="card-head">
-              <span class="card-name">{{ s.name }}</span>
-              <el-tooltip :content="statusTip(s)" :disabled="!statusTip(s)" placement="top">
-                <el-tag size="small" :type="statusTagType(s.status)" disable-transitions>{{ statusLabel(s.status) }}</el-tag>
-              </el-tooltip>
-            </div>
-            <div class="card-desc">{{ s.desc || '（无描述）' }}</div>
-            <div class="card-cmd mono">{{ s.start }}</div>
-            <div class="card-meta">
-              <el-tag v-if="s.status.status === 'running' && s.memMB" size="small" type="success" effect="plain" disable-transitions>
-                {{ s.memMB }} MB
-              </el-tag>
-            </div>
-            <div class="card-ops">
-              <el-button size="small" type="success" plain :loading="startingId === s.id" :disabled="s.status.status === 'running'" @click="start(s)">启动</el-button>
-              <el-button v-if="s.open && s.status.status === 'running'" size="small" type="primary" plain @click="openCard(s)">打开</el-button>
-              <el-button size="small" type="danger" plain :disabled="s.status.status !== 'running'" @click="stop(s)">关闭</el-button>
-              <el-button size="small" text @click="openLogs(s)">日志</el-button>
-              <el-button size="small" text @click="router.push(`/scripts/${encodeURIComponent(s.id)}/edit`)">编辑</el-button>
-              <el-button size="small" text type="danger" :disabled="s.status.status === 'running'" @click="removeCard(s)">删除</el-button>
-            </div>
-          </el-card>
-        </div>
-      </section>
+      <div class="group-head">
+        <span class="group-name">全部工具</span>
+        <span class="group-count">{{ cards.length }} 张 · 运行 {{ runCount }}</span>
+      </div>
+      <div class="card-grid">
+        <el-card v-for="s in cards" :key="s.id" class="script-card" shadow="hover">
+          <div class="card-head">
+            <span class="card-name">{{ s.name }}</span>
+            <el-tooltip :content="statusTip(s)" :disabled="!statusTip(s)" placement="top">
+              <el-tag size="small" :type="statusTagType(s.status)" disable-transitions>{{ statusLabel(s.status) }}</el-tag>
+            </el-tooltip>
+          </div>
+          <div class="card-desc">{{ s.desc || '（无描述）' }}</div>
+          <div class="card-cmd mono">{{ s.start }}</div>
+          <div class="card-meta">
+            <el-tag v-if="s.status.status === 'running' && s.memMB" size="small" type="success" effect="plain" disable-transitions>
+              {{ s.memMB }} MB
+            </el-tag>
+          </div>
+          <div class="card-ops">
+            <el-button size="small" type="success" plain :loading="startingId === s.id" :disabled="s.status.status === 'running'" @click="start(s)">启动</el-button>
+            <el-button v-if="s.open && s.status.status === 'running'" size="small" type="primary" plain @click="openCard(s)">打开</el-button>
+            <el-button size="small" type="danger" plain :disabled="s.status.status !== 'running'" @click="stop(s)">关闭</el-button>
+            <el-button size="small" text @click="openLogs(s)">日志</el-button>
+            <el-button size="small" text @click="router.push(`/scripts/${encodeURIComponent(s.id)}/edit`)">编辑</el-button>
+            <el-button size="small" text type="danger" :disabled="s.status.status === 'running'" @click="removeCard(s)">删除</el-button>
+          </div>
+        </el-card>
+      </div>
     </div>
   </div>
 

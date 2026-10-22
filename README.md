@@ -11,7 +11,6 @@
 - `electron/` — 主进程 `main.cjs`（起服 + 开窗 + 单实例锁 + 卡片播种）；`server.mjs` 为 esbuild 打包产物（勿手改）
 - `server/` — Hono 服务源码（routes 卡片 API / store 卡片定位 / procman 进程管理）
 - `web/` — Vue3 + Element Plus 前端（构建产物 web/dist）
-- `scripts/` — 内置卡片，一卡片一目录（目录 + script.json 即注册）；随包附 `time-tool`（纯静态日程页）作示例
 - `build/node-runtime/` — 捆绑的裸 node.exe（卡片运行时，随包分发）
 - `release/` — `npm run app:dist` 产物（ai-scripts-portable.exe + win-unpacked/）
 
@@ -20,18 +19,17 @@
 - **日常**：双击 `ai-scripts-portable.exe` —— 主进程内起 Hono(:8792) 并开控制台窗口；**关窗口 = 应用退出**。单实例锁：重复双击聚焦已有窗口
 - **卡片子进程语义**：已启动的卡片不随窗口退（Windows 孤儿进程独立存活），下次打开凭 `.run.json` 接管状态显示；停某张卡片用 UI 上的「关闭」
 - **卡片 node 依赖**：包内捆绑 node.exe，procman 启动卡片时自动前插 PATH——目标机器**无需安装 Node**，`node xxx.cjs` 类登记命令照常工作
-- **数据路径**：内置卡片首启按目录增量播种到 `%APPDATA%\ai-scripts\scripts`（用户改动持久、包更新只补新卡片）；用户自建/外置卡片在 `~/.ai-scripts/`
+- **数据路径**：工具唯一根 = `~/.ai-scripts/`（一卡片一目录，放入即注册）。旧版本播种在 `%APPDATA%\ai-scripts\scripts` 的卡片，新版首启自动搬迁到 `~/.ai-scripts`
 
 ## 卡片登记（script.json）
 
 ```jsonc
 {
-	"id": "time-tool",
-	"name": "时间工具",
-	"desc": "个人日程管理（周/日/月视图，拖选建日程）",
+	"id": "my-tool",
+	"name": "我的工具",
+	"desc": "工具描述",
 	"start": "explorer index.html",   // 启动命令行，cwd 固定卡片目录
-	"transient": true,                // 瞬退豁免：explorer 打开页面类，启动后进程立即退出属预期
-	"builtin": true
+	"transient": true                 // 瞬退豁免：explorer 打开页面类，启动后进程立即退出属预期
 }
 ```
 

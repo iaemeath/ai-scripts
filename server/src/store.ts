@@ -1,10 +1,10 @@
-// 卡片存储 + 数据根 — 一卡片一目录（scripts/<id>/ + script.json），目录即卡片（放入即注册）。
+// 卡片存储 + 数据根 — 一卡片一目录（~/.ai-scripts/<id>/ + script.json），目录即卡片（放入即注册）。
 // 登记册模型：script.json 只管登记，唯一机制字段是 start —— 一条命令行。
 //   { "name": "智谱额度看板", "start": "node quota-tools.js serve" }
 //   { "name": "Geek 卸载器",  "start": "D:\\soft\\geek.exe" }
 //   { "name": "时间工具",     "start": "explorer index.html" }   ← 用系统默认程序打开页面
 // 启动 = 执行该命令行（cwd 固定为卡片目录，外部程序写绝对路径）；关闭 = 杀进程树。
-// 存储根双根：内置 = 仓库 ai-scripts/scripts（完整仓库，随代码迁移）；外置 = ~/.ai-scripts（自装工具的登记卡片，如 geek、cc-switch）。
+// 存储根单根：~/.ai-scripts（2026-10-22 起废除内置/外置双根——卡片全部走用户目录，见 main.cjs 的一次性迁移）。
 
 import fs from 'node:fs';
 import os from 'node:os';
@@ -30,48 +30,22 @@ export interface ScriptManifest {
 	process?: string;
 	/** 瞬退豁免（可选）：启动后进程立即退出属预期（如 explorer 打开页面类卡片），跳过启动失败判定。 */
 	transient?: boolean;
-	/** [已废弃] 内置/外置改按卡片所在目录判定（仓库 scripts/=内置，~/.ai-scripts/=外置）。
-	 *  字段仍容忍存在但被忽略，仅作历史兼容。 */
+	/** [已废弃] 内置/外置双根已废除，卡片一律在 ~/.ai-scripts。字段容忍存在但被忽略。 */
 	builtin?: boolean;
+	/** [已废弃] 仅历史兼容，忽略。 */
 	order?: number;
 }
 
 /* ---------- 卡片目录 ---------- */
 
-/** 卡片根：仓库内置 scripts/（随代码迁移）。 */
-export function scriptsRoot(): string {
-	// Electron 形态由 main.cjs 注入（打包=userData/scripts 播种副本，dev=仓库 scripts/）；
-	// 缺省按源码相对位置解析——dev（server/src，2 级）与打包（electron/，1 级）层级不同，
-	// 两个候选取存在者（锚点 = 仓库根 / app 根都必有的 package.json），与 index.ts 的 dist 解析同款
-	const injected = process.env.AI_SCRIPTS_SCRIPTS_ROOT;
-	if (injected) return injected;
-	const here = path.dirname(fileURLToPath(import.meta.url));
-	return [path.resolve(here, '../../scripts'), path.resolve(here, '../scripts')].find((p) => fs.existsSync(path.join(p, '..', 'package.json')))
-		?? path.resolve(here, '../scripts');
-}
-
-/** 外置卡片根：~/.ai-scripts（用户自装工具的登记卡片，与仓库代码分离）。 */
-export function externalRoot(): string {
+/** 卡片根（唯一）：~/.ai-scripts。 */
+export function cardsRoot(): string {
 	return path.join(os.homedir(), '.ai-scripts');
 }
 
-/** 卡片定位：内置=仓库 scripts/，外置=~/.ai-scripts，按实际位置判定（同 id 两根冲突时内置优先）。 */
-export function locateCard(id: string): { dir: string; builtin: boolean } | null {
-	const inRepo = path.join(scriptsRoot(), id);
-	if (fs.existsSync(path.join(inRepo, 'script.json'))) return { dir: inRepo, builtin: true };
-	const inHome = path.join(externalRoot(), id);
-	if (fs.existsSync(path.join(inHome, 'script.json'))) return { dir: inHome, builtin: false };
-	return null;
-}
-
-/** 是否内置卡片（按所在目录判定，与 script.json 的 builtin 字段无关）。 */
-export function isBuiltinCard(id: string): boolean {
-	return locateCard(id)?.builtin ?? false;
-}
-
-/** 卡片目录：已登记的卡片解析其实际所在根；未登记（新建场景）落到外置根——UI 新建的卡片默认外置。 */
+/** 卡片目录：<根>/<id>。 */
 export function scriptDir(id: string): string {
-	return locateCard(id)?.dir ?? path.join(externalRoot(), id);
+	return path.join(cardsRoot(), id);
 }
 
 export function readManifest(id: string): ScriptManifest {
@@ -79,18 +53,14 @@ export function readManifest(id: string): ScriptManifest {
 }
 
 export function listScriptIds(): string[] {
-	const scan = (root: string): string[] => {
-		if (!fs.existsSync(root)) return [];
-		return fs.readdirSync(root)
-			.filter((n) => {
-				const d = path.join(root, n);
-				return !n.startsWith('.') && fs.statSync(d).isDirectory() && fs.existsSync(path.join(d, 'script.json'));
-			});
-	};
-	const builtinIds = scan(scriptsRoot());
-	const externalIds = scan(externalRoot());
-	const seen = new Set(builtinIds); // 同 id 冲突：内置根优先，外置同名目录被遮蔽
-	return [...builtinIds, ...externalIds.filter((n) => !seen.has(n))].sort();
+	const root = cardsRoot();
+	if (!fs.existsSync(root)) return [];
+	return fs.readdirSync(root)
+		.filter((n) => {
+			const d = path.join(root, n);
+			return !n.startsWith('.') && fs.statSync(d).isDirectory() && fs.existsSync(path.join(d, 'script.json'));
+		})
+		.sort();
 }
 
 /** Windows 上 path.resolve(dir, '/x') 会落到盘符根，统一先剥前导斜杠再 resolve，并兜底防穿越。 */
