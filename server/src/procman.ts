@@ -198,7 +198,7 @@ const NAME_GUARD_DENY = new Set([
 ]);
 
 /** 归一化进程名：无扩展名自动补 .exe，全小写。 */
-function normalizeImageName(name: string): string {
+export function normalizeImageName(name: string): string {
 	const lower = String(name || '').trim().toLowerCase();
 	return lower.endsWith('.exe') ? lower : `${lower}.exe`;
 }
