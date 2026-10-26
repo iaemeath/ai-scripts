@@ -192,3 +192,18 @@ describe('normalizeProcess', () => {
 		assert.deepEqual(normalizeProcess([' QQ.exe ', '']), ['QQ.exe']);
 	});
 });
+
+/* ---------- 线上 JSON 形状：前端 types/script.ts 契约（嵌套 status + memMB 大写） ---------- */
+
+describe('statusOf wire shape', () => {
+	test('状态对象含嵌套 status 与 memMB 大小写键', () => {
+		const s = statusOf('__no_such_card__');
+		assert.equal(s.status, 'idle');
+		assert.equal(s.pid, null);
+		assert.equal(s.startedAt, null);
+		// 键名大小写是前端契约（views 读 card.status.status / card.memMB），改名即漂移
+		assert.ok('startedAt' in s);
+		const cached = statusOf('__no_such_card__');
+		assert.ok(!('memMb' in JSON.parse(JSON.stringify(cached))));
+	});
+});
