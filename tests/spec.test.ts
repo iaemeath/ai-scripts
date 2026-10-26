@@ -10,7 +10,7 @@ import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 import { splitCommand, normalizeImageName, pidAlive, probeUrl, startProc, stopProc, statusOf } from '../server/src/procman.js';
-import { cardsRoot, listScriptIds, readManifest, safeJoin, SCRIPT_ID_RE } from '../server/src/store.js';
+import { cardsRoot, listScriptIds, normalizeProcess, readManifest, safeJoin, SCRIPT_ID_RE } from '../server/src/store.js';
 
 /* ---------- splitCommand：引号感知分词 ---------- */
 
@@ -173,5 +173,22 @@ describe('lifecycle', () => {
 		if (process.platform === 'win32') {
 			assert.equal(pidAlive(before), false);
 		}
+	});
+});
+
+/* ---------- manifest.process：单名/数组双形态（一卡片多应用，向后兼容） ---------- */
+
+describe('normalizeProcess', () => {
+	test('字符串形态归一化为单元素数组', () => {
+		assert.deepEqual(normalizeProcess('QQ.exe'), ['QQ.exe']);
+	});
+	test('数组形态保持顺序', () => {
+		assert.deepEqual(normalizeProcess(['QQ.exe', 'Weixin.exe', 'DingTalk.exe']), ['QQ.exe', 'Weixin.exe', 'DingTalk.exe']);
+	});
+	test('undefined → 空数组', () => {
+		assert.deepEqual(normalizeProcess(undefined), []);
+	});
+	test('trim 并丢弃空项', () => {
+		assert.deepEqual(normalizeProcess([' QQ.exe ', '']), ['QQ.exe']);
 	});
 });

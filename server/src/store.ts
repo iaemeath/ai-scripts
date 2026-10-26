@@ -24,10 +24,10 @@ export interface ScriptManifest {
 	check?: string;
 	/** 停止命令行（可选）：配置后「关闭」执行它，代替杀进程树——适合守护式服务的优雅停止。 */
 	stop?: string;
-	/** 进程名探测（可选，如 geek.exe）：配置后，即使不是控制台拉起的，系统里存在该进程即显示
-	 *  「运行中」，「关闭」按名强杀——适合手动双击启动的 GUI 工具。解释器/系统进程名（node.exe
-	 *  等）一律拒绝，此类工具请改用 check 探测。 */
-	process?: string;
+	/** 进程名探测（可选，单名或数组）：任一存在于系统即显示「运行中」，「关闭」按名强杀兜底——
+	 *  适合手动双击启动的 GUI 工具，或一卡片拉起多个应用（数组任一存活即亮运行灯）。
+	 *  解释器/系统进程名（node.exe 等）一律拒绝，此类工具请改用 check 探测。 */
+	process?: string | string[];
 	/** 瞬退豁免（可选）：启动后进程立即退出属预期（如 explorer 打开页面类卡片），跳过启动失败判定。 */
 	transient?: boolean;
 	/** [已废弃] 内置/外置双根已废除，卡片一律在 ~/.ai-scripts。字段容忍存在但被忽略。 */
@@ -50,6 +50,13 @@ export function scriptDir(id: string): string {
 
 export function readManifest(id: string): ScriptManifest {
 	return JSON.parse(fs.readFileSync(path.join(scriptDir(id), 'script.json'), 'utf8')) as ScriptManifest;
+}
+
+/** process 字段归一化：单名/数组双形态 → 去空白去空项的名单（与 Rust 版 process_names 对齐）。 */
+export function normalizeProcess(p: string | string[] | undefined): string[] {
+	if (!p) return [];
+	const list = Array.isArray(p) ? p : [p];
+	return list.map((s) => s.trim()).filter((s) => s !== '');
 }
 
 export function listScriptIds(): string[] {

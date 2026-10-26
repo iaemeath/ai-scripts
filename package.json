@@ -16,7 +16,7 @@
     "app": "npm run app:build && electron electron/main.mjs",
     "app:dist": "npm run app:build && electron-builder --win --config electron-builder.yml",
     "typecheck": "npm -w server exec tsc && npm -w web exec vue-tsc",
-    "test": "tsx --test tests/*.spec.test.ts"
+    "test": "tsx --test tests/*.test.ts"
   },
   "devDependencies": {
     "concurrently": "^9.1.0",

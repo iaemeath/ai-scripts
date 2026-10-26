@@ -12,7 +12,7 @@ import fs from 'node:fs';
 import http from 'node:http';
 import https from 'node:https';
 import path from 'node:path';
-import { listScriptIds, readManifest, scriptDir } from './store.js';
+import { listScriptIds, normalizeProcess, readManifest, scriptDir } from './store.js';
 
 const KEEP_LOG_FILES = 10;
 const REFRESH_MS = 2500; // 缓存后台刷新间隔（UI 轮询 5s，减半保新鲜）
@@ -212,16 +212,16 @@ interface CachedState extends ProcState {
 const statusCache = new Map<string, CachedState>();
 let inflight: Promise<void> | null = null;
 
-async function computeStatus(id: string, checkUrl: string | undefined, processName: string | undefined, snap: Snap): Promise<CachedState> {
+async function computeStatus(id: string, checkUrl: string | undefined, processNames: string[], snap: Snap): Promise<CachedState> {
 	const checkedAt = Date.now();
 	const p = procs.get(id);
 	if (p && pidAlive(p.pid)) {
 		return { status: 'running', pid: p.pid, startedAt: p.startedAt, memMB: snap.memOf.get(p.pid), checkedAt };
 	}
-	// 外部存活探测：服务 URL 可达（stctl 托管式）或系统里存在同名进程（手动双击的 GUI exe）都算运行中
+	// 外部存活探测：服务 URL 可达（stctl 托管式）或系统里存在同名进程（手动双击的 GUI exe / 一卡多应用）都算运行中
 	if (checkUrl && await probeUrl(checkUrl)) return { status: 'running', pid: null, startedAt: null, checkedAt };
-	if (processName) {
-		const img = normalizeImageName(processName);
+	for (const name of processNames) {
+		const img = normalizeImageName(name);
 		if (!NAME_GUARD_DENY.has(img) && snap.names.has(img)) return { status: 'running', pid: null, startedAt: null, checkedAt };
 	}
 	if (p) return { status: 'exited', pid: p.pid, startedAt: p.startedAt, checkedAt };
@@ -247,7 +247,7 @@ function refreshAll(): Promise<void> {
 					} catch {
 						return null;
 					}
-					return computeStatus(id, m.check, m.process, snap);
+					return computeStatus(id, m.check, normalizeProcess(m.process), snap);
 				}));
 				ids.forEach((id, i) => {
 					const st = states[i];
@@ -357,7 +357,17 @@ async function killByName(name: string): Promise<boolean> {
 	return !after.names.has(img);
 }
 
-export async function stopProc(id: string, stopCmd?: string, processName?: string): Promise<boolean> {
+/** 进程名探测：名单中任一存在于系统快照即 true（解释器/系统进程名拒绝）。删除新鲜判定用。 */
+export async function processAnyAlive(names: string[]): Promise<boolean> {
+	if (names.length === 0) return false;
+	const snap = await snapshot();
+	return names.some((n) => {
+		const img = normalizeImageName(n);
+		return !NAME_GUARD_DENY.has(img) && snap.names.has(img);
+	});
+}
+
+export async function stopProc(id: string, stopCmd?: string, processNames: string[] = []): Promise<boolean> {
 	if (stopCmd) {
 		// 优雅停止：执行登记的停止命令（如 stctl --stop），并清掉本控制台的跟踪痕迹
 		spawnDetached(stopCmd, scriptDir(id));
@@ -375,7 +385,10 @@ export async function stopProc(id: string, stopCmd?: string, processName?: strin
 	}
 	if (pid === null) {
 		// 没有可跟踪的 pid：登记了进程名则按名兜底强杀（外部手动启动的卡片），否则无事可做
-		const killed = processName ? await killByName(processName) : false;
+		let killed = false;
+		for (const name of processNames) {
+			if (await killByName(name)) killed = true;
+		}
 		removeRunEntry(id);
 		refreshSoon();
 		return killed;

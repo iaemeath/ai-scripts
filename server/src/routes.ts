@@ -7,9 +7,9 @@ import { Hono } from 'hono';
 import fs from 'node:fs';
 import path from 'node:path';
 import {
-	listScriptIds, readManifest, safeJoin, scriptDir, SCRIPT_ID_RE, type ScriptManifest,
+	listScriptIds, normalizeProcess, readManifest, safeJoin, scriptDir, SCRIPT_ID_RE, type ScriptManifest,
 } from './store.js';
-import { pidAlive, probeUrl, refreshSoon, spawnDetached, startProc, statusOf, stopProc, warmup } from './procman.js';
+import { pidAlive, processAnyAlive, probeUrl, refreshSoon, spawnDetached, startProc, statusOf, stopProc, warmup } from './procman.js';
 
 export const scripts = new Hono();
 
@@ -155,9 +155,10 @@ scripts.delete('/:id', async (c) => {
 	const loaded = loadOr404(c);
 	if (loaded instanceof Response) return loaded;
 	const { id, manifest } = loaded;
-	// 缓存判运行 + check 地址新鲜探测兜底（防外部启动的实例被误删）
+	// 缓存判运行 + check/process 新鲜探测兜底（防外部启动的实例被误删）
 	const running = statusOf(id).status === 'running'
-		|| (manifest.check ? await probeUrl(manifest.check, 1500) : false);
+		|| (manifest.check ? await probeUrl(manifest.check, 1500) : false)
+		|| (await processAnyAlive(normalizeProcess(manifest.process)));
 	if (running) {
 		return err(c, 409, '正在运行，请先关闭');
 	}
@@ -228,7 +229,7 @@ scripts.post('/:id/open', (c) => {
 scripts.post('/:id/stop', async (c) => {
 	const loaded = loadOr404(c);
 	if (loaded instanceof Response) return loaded;
-	return c.json({ ok: true, killed: await stopProc(loaded.id, loaded.manifest.stop, loaded.manifest.process) });
+	return c.json({ ok: true, killed: await stopProc(loaded.id, loaded.manifest.stop, normalizeProcess(loaded.manifest.process)) });
 });
 
 /* ===================== 卡片日志（logs/ 目录列表 + 尾部查看） ===================== */
